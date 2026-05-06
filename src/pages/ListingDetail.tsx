@@ -5,17 +5,19 @@ import ImageGallery from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
 import PricingTable from '@/src/components/PricingTable';
 import { calculateBookingDetails, getPriceForDate, SEASONS } from '@/src/lib/pricing';
-import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle } from 'lucide-react';
+import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2 } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function ListingDetail() {
   const { id } = useParams();
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [reserving, setReserving] = useState(false);
   const [selectedRange, setSelectedRange] = useState<[Date, Date] | null>(null);
   const [guests, setGuests] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -88,7 +90,7 @@ export default function ListingDetail() {
     ? getPriceForDate(selectedRange[0]) 
     : (listing ? getPriceNumber(listing.price) : 0);
 
-  const handleReserve = () => {
+  const handleReserve = async () => {
     if (!selectedRange) {
       // If no range selected, scroll to calendar
       const calendar = document.querySelector('.calendar-container');
@@ -101,13 +103,36 @@ export default function ListingDetail() {
       return;
     }
     
-    // Simulate booking process
-    setShowSuccess(true);
-    setTimeout(() => {
-      const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
-      const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nReinigung: ${cleaningFee} €\nService: ${serviceFee} €\nGesamt: ${total} €\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
-      window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
-    }, 2000);
+    setReserving(true);
+    setError(null);
+
+    try {
+      // Save booking to Firestore
+      if (listing.type === 'rental') {
+        const bookingsRef = collection(db, 'bookings');
+        await addDoc(bookingsRef, {
+          listingId: listing.id,
+          startDate: selectedRange[0].toISOString(),
+          endDate: selectedRange[1].toISOString(),
+          guests,
+          totalPrice: total,
+          status: 'pending',
+          createdAt: serverTimestamp()
+        });
+      }
+
+      setShowSuccess(true);
+      setTimeout(() => {
+        const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
+        const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nReinigung: ${cleaningFee} €\nService: ${serviceFee} €\nGesamt: ${total} €\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+        window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
+      }, 2000);
+    } catch (err: any) {
+      console.error("Error creating booking:", err);
+      setError("Es gab ein Problem bei der Reservierung. Bitte versuchen Sie es später erneut.");
+    } finally {
+      setReserving(false);
+    }
   };
 
   if (loading) return <div className="pt-40 text-center animate-pulse">Lade Objekt-Details...</div>;
@@ -234,12 +259,24 @@ export default function ListingDetail() {
 
                 <button 
                   onClick={handleReserve}
-                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  disabled={reserving || !!error}
+                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {listing.type === 'rental' 
-                    ? (selectedRange ? 'Reservieren' : 'Verfügbarkeit prüfen') 
-                    : 'Exposé anfordern'}
+                  {reserving ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Wird verarbeitet...
+                    </>
+                  ) : (
+                    listing.type === 'rental' 
+                      ? (selectedRange ? 'Reservieren' : 'Verfügbarkeit prüfen') 
+                      : 'Exposé anfordern'
+                  )}
                 </button>
+
+                {error && (
+                  <p className="text-red-500 text-xs text-center mb-4">{error}</p>
+                )}
 
                 <a 
                   href={`https://wa.me/4915565224488?text=${encodeURIComponent(`Hallo, ich interessiere mich für das Objekt: ${listing.title} in ${listing.location}`)}`}
@@ -280,7 +317,11 @@ export default function ListingDetail() {
                 )}
               </div>
 
-              <BookingCalendar icalUrl={listing.icalUrl} onDateChange={setSelectedRange} />
+              <BookingCalendar 
+                listingId={listing.id} 
+                icalUrl={listing.icalUrl} 
+                onDateChange={setSelectedRange} 
+              />
             </div>
           </div>
         </div>

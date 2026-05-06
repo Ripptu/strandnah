@@ -1,9 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
     match /listings/{listingId} {
       allow read: if true;
-      allow create, update, delete: if true; 
+      allow write: if true; // In prod, this would be admin-only
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true; // Allow for demo purposes, in prod restricted
     }
 
     match /admins/{adminId} {

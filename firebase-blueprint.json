@@ -25,12 +25,31 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "location", "price", "images", "type"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A reservation for a property",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "listingId": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "guests": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["listingId", "startDate", "endDate"]
     }
   },
   "firestore": {
     "listings": {
       "schema": "Listing",
       "description": "Collection of all property listings"
+    },
+    "bookings": {
+      "schema": "Booking",
+      "description": "Collection of all property reservations"
     }
   }
 }

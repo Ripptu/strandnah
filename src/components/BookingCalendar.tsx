@@ -2,36 +2,65 @@ import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { getBlockedDatesFromIcal } from '@/src/lib/ical';
+import { db } from '@/src/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface Props {
+  listingId?: string;
   icalUrl?: string;
   onDateChange: (range: [Date, Date] | null) => void;
 }
 
-export default function BookingCalendar({ icalUrl, onDateChange }: Props) {
+export default function BookingCalendar({ listingId, icalUrl, onDateChange }: Props) {
   const [selectedRange, setSelectedRange] = useState<any>(null);
-  const [bookedDays, setBookedDays] = useState<Date[]>([]);
+  const [dbBookedDays, setDbBookedDays] = useState<Date[]>([]);
+  const [icalBookedDays, setIcalBookedDays] = useState<Date[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Firestore Bookings Listener
+  useEffect(() => {
+    if (!listingId) return;
+
+    const q = query(
+      collection(db, 'bookings'),
+      where('listingId', '==', listingId),
+      where('status', '!=', 'cancelled')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const dates: Date[] = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        
+        // Add all dates between start and end
+        let curr = new Date(start);
+        while (curr <= end) {
+          dates.push(new Date(curr));
+          curr.setDate(curr.getDate() + 1);
+        }
+      });
+      setDbBookedDays(dates);
+    });
+
+    return () => unsubscribe();
+  }, [listingId]);
+
+  // iCal Listener
   useEffect(() => {
     if (icalUrl) {
       setLoading(true);
       getBlockedDatesFromIcal(icalUrl)
         .then(dates => {
-          setBookedDays(dates.map(d => new Date(d)));
+          setIcalBookedDays(dates.map(d => new Date(d)));
           setLoading(false);
         })
         .catch(() => setLoading(false));
-    } else {
-      setBookedDays([
-        new Date(2026, 4, 10),
-        new Date(2026, 4, 11),
-        new Date(2026, 4, 12),
-        new Date(2026, 4, 20),
-        new Date(2026, 4, 21),
-      ]);
     }
   }, [icalUrl]);
+
+  const bookedDays = [...dbBookedDays, ...icalBookedDays];
 
   const handleDateChange = (value: any) => {
     setSelectedRange(value);
