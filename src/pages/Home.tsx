@@ -7,11 +7,23 @@ import { cn } from '@/src/lib/utils';
 import { collection, query, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/src/lib/firebase';
 
-const HERO_IMAGE = 'https://s1.directupload.eu/images/260506/bzioxhyn.webp';
+const HERO_IMAGES = [
+  'https://s1.directupload.eu/images/260506/bzioxhyn.webp',
+  'https://s1.directupload.eu/images/260506/6yorps8l.webp',
+  'https://s1.directupload.eu/images/260506/qg3trvbx.webp'
+];
 
 export default function Home() {
   const [featured, setFeatured] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -34,12 +46,20 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-black/30 z-10" />
-          <img 
-            src={HERO_IMAGE} 
-            className="w-full h-full object-cover" 
-            alt="Hero Strand Usedom" 
-          />
+          <div className="absolute inset-0 bg-black/40 z-10" />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentImageIndex}
+              src={HERO_IMAGES[currentImageIndex]}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full object-cover"
+              alt="Hero Strand Usedom"
+              referrerPolicy="no-referrer"
+            />
+          </AnimatePresence>
         </div>
 
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white px-6 text-center">
