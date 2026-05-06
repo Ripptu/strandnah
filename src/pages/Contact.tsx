@@ -40,7 +40,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">Büro</h3>
-                  <p className="text-text-secondary truncate">Friedrichstraße 12, 17419 Seebad Ahlbeck</p>
+                  <p className="text-text-secondary truncate">Lindenstraße 82, 17419 Seebad Ahlbeck</p>
                 </div>
               </div>
             </div>

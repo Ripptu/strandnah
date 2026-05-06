@@ -5,7 +5,7 @@ import ImageGallery from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
 import PricingTable from '@/src/components/PricingTable';
 import { calculateBookingDetails, getPriceForDate, SEASONS } from '@/src/lib/pricing';
-import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2 } from 'lucide-react';
+import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2, Users } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -228,32 +228,40 @@ export default function ListingDetail() {
                   </div>
                 </div>
 
-                <div className="border border-gray-400 rounded-xl overflow-hidden mb-4">
-                  <div className="grid grid-cols-2 border-b border-gray-400">
-                    <div className="p-3 border-r border-gray-400">
-                      <p className="text-[10px] font-bold uppercase">Check-in</p>
-                      <p className="text-sm">
+                <div className="border border-gray-300 rounded-xl overflow-hidden mb-4 hover:border-airbnb-red transition-colors duration-300">
+                  <div className="grid grid-cols-2 border-b border-gray-300">
+                    <div className="p-3 border-r border-gray-300 hover:bg-gray-50 transition-colors">
+                      <p className="text-[10px] font-bold uppercase text-gray-500">Check-in</p>
+                      <p className="text-sm font-medium">
                         {selectedRange?.[0] ? selectedRange[0].toLocaleDateString('de-DE') : 'Datum wählen'}
                       </p>
                     </div>
-                    <div className="p-3">
-                      <p className="text-[10px] font-bold uppercase">Check-out</p>
-                      <p className="text-sm">
+                    <div className="p-3 hover:bg-gray-50 transition-colors">
+                      <p className="text-[10px] font-bold uppercase text-gray-500">Check-out</p>
+                      <p className="text-sm font-medium">
                         {selectedRange?.[1] ? selectedRange[1].toLocaleDateString('de-DE') : 'Datum wählen'}
                       </p>
                     </div>
                   </div>
-                  <div className="p-3">
-                    <p className="text-[10px] font-bold uppercase">Gäste</p>
-                    <select 
-                      value={guests} 
-                      onChange={(e) => setGuests(parseInt(e.target.value))}
-                      className="w-full text-sm bg-transparent border-none p-0 focus:ring-0 cursor-pointer"
-                    >
-                      {[1, 2, 3, 4, 5, 6].map(num => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Gast' : 'Gäste'}</option>
-                      ))}
-                    </select>
+                  <div className="p-3 relative group hover:bg-gray-50 transition-colors">
+                    <p className="text-[10px] font-bold uppercase text-airbnb-red">Personenanzahl</p>
+                    <div className="flex items-center">
+                      <select 
+                        value={guests} 
+                        onChange={(e) => setGuests(parseInt(e.target.value))}
+                        className="w-full text-base font-medium bg-transparent border-none p-0 focus:ring-0 cursor-pointer appearance-none pr-8"
+                      >
+                        {[1, 2, 3, 4, 5, 6].map(num => (
+                          <option key={num} value={num} className="text-black">
+                            {num} {num === 1 ? 'Gast' : 'Gäste'}
+                          </option>
+                        ))}
+                      </select>
+                      <Users 
+                        size={18} 
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-airbnb-red opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" 
+                      />
+                    </div>
                   </div>
                 </div>
 
