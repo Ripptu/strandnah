@@ -21,27 +21,37 @@ export default function BookingCalendar({ listingId, icalUrl, onDateChange }: Pr
   useEffect(() => {
     if (!listingId) return;
 
+    // We fetch all bookings for this listing and filter cancelled ones in memory
+    // to avoid the need for composite indexes in the demo environment.
     const q = query(
       collection(db, 'bookings'),
-      where('listingId', '==', listingId),
-      where('status', '!=', 'cancelled')
+      where('listingId', '==', listingId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const dates: Date[] = [];
       snapshot.forEach(doc => {
         const data = doc.data();
+        if (data.status === 'cancelled') return;
+        
         const start = new Date(data.startDate);
         const end = new Date(data.endDate);
         
         // Add all dates between start and end
         let curr = new Date(start);
-        while (curr <= end) {
+        // Normalize to midnight to avoid timezone shifts during the loop
+        curr.setHours(0, 0, 0, 0);
+        const endNormal = new Date(end);
+        endNormal.setHours(0, 0, 0, 0);
+
+        while (curr <= endNormal) {
           dates.push(new Date(curr));
           curr.setDate(curr.getDate() + 1);
         }
       });
       setDbBookedDays(dates);
+    }, (error) => {
+      console.error("Firestore subscription error:", error);
     });
 
     return () => unsubscribe();

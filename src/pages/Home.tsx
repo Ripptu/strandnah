@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, MapPin } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
-import { collection, query, limit, getDocs } from 'firebase/firestore';
+import { collection, query, limit, getDocs, where } from 'firebase/firestore';
 import { db } from '@/src/lib/firebase';
 
 const HERO_IMAGES = [
@@ -13,8 +13,24 @@ const HERO_IMAGES = [
   'https://s1.directupload.eu/images/260506/qg3trvbx.webp'
 ];
 
+const TeaserCard = ({ title, imgUrl }: { title: string, imgUrl: string }) => (
+  <div className="group cursor-default relative">
+    <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-4 bg-gray-200 shadow-sm relative">
+      <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[2px]">
+        <div className="bg-white/20 backdrop-blur-md border border-white/40 text-white px-6 py-2 rounded-full font-bold tracking-widest uppercase text-sm">
+          Demnächst
+        </div>
+      </div>
+      <img src={imgUrl} className="w-full h-full object-cover grayscale" alt="Teaser" />
+    </div>
+    <h3 className="font-bold text-lg text-gray-500">{title}</h3>
+    <p className="text-gray-400">Usedom</p>
+  </div>
+);
+
 export default function Home() {
-  const [featured, setFeatured] = useState<any[]>([]);
+  const [rentals, setRentals] = useState<any[]>([]);
+  const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -26,19 +42,22 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchListings = async () => {
       try {
-        const q = query(collection(db, 'listings'), limit(2));
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setFeatured(data);
+        const rentalsQuery = query(collection(db, 'listings'), where('type', '==', 'rental'), limit(2));
+        const salesQuery = query(collection(db, 'listings'), where('type', '==', 'sale'), limit(2));
+        
+        const [rentalsSnap, salesSnap] = await Promise.all([getDocs(rentalsQuery), getDocs(salesQuery)]);
+        
+        setRentals(rentalsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setSales(salesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
         console.error("Error fetching featured:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchFeatured();
+    fetchListings();
   }, []);
 
   return (
@@ -174,37 +193,108 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Properties Preview */}
-      <section className="bg-[#F7F7F7] py-24">
+      {/* Featured Rentals */}
+      <section className="bg-[#F7F7F7] py-24 border-t border-gray-200">
         <div className="max-w-[1280px] mx-auto px-6">
-          <div className="flex items-end justify-between mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Exklusive Angebote</h2>
-              <p className="text-text-secondary">Entdecken Sie unsere Highlights der Saison.</p>
+              <h2 className="text-3xl font-bold mb-2">Unsere Ferienwohnungen</h2>
+              <p className="text-text-secondary">Entdecken Sie gemütliche Rückzugsorte für Ihren Urlaub.</p>
             </div>
-            <Link to="/eigentumswohnungen" className="text-sm font-semibold underline">Alle Angebote anzeigen</Link>
+            <Link to="/ferienwohnungen" className="text-sm font-semibold underline text-text-secondary hover:text-black">
+              Alle Ferienwohnungen anzeigen
+            </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {loading ? (
-              <p>Lade Angebote...</p>
-            ) : featured.length > 0 ? (
-              featured.map((item) => (
-                <Link key={item.id} to="/ferienwohnungen" className="group cursor-pointer">
-                  <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-4 shadow-sm">
-                    <img 
-                      src={item.images?.[0] || 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&q=80'} 
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      alt={item.title} 
-                    />
-                  </div>
-                  <h3 className="font-bold text-lg">{item.title}</h3>
-                  <p className="text-text-secondary">{item.location}</p>
-                </Link>
-              ))
+              <p>Lade Ferienwohnungen...</p>
             ) : (
-              <p className="text-text-secondary italic">Keine exklusiven Angebote vorhanden. Fügen Sie welche im Admin-Panel hinzu.</p>
+              <>
+                {rentals.map((item) => (
+                  <Link key={item.id} to={`/ferienwohnungen/${item.id}`} className="group cursor-pointer">
+                    <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-4 shadow-sm">
+                      <img 
+                        src={item.images?.[0] || 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&q=80'} 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        alt={item.title} 
+                      />
+                    </div>
+                    <h3 className="font-bold text-lg group-hover:text-airbnb-red transition-colors">{item.title}</h3>
+                    <p className="text-text-secondary">{item.location}</p>
+                  </Link>
+                ))}
+                {/* Fixed Teaser #3 for Rentals */}
+                <TeaserCard title="Exklusives Strand Apartment" imgUrl="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80" />
+              </>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Sales */}
+      <section className="py-24">
+        <div className="max-w-[1280px] mx-auto px-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">Eigentumswohnungen</h2>
+              <p className="text-text-secondary">Exklusive Immobilien als Ihr neues Zuhause oder Investment.</p>
+            </div>
+            <Link to="/eigentumswohnungen" className="text-sm font-semibold underline text-text-secondary hover:text-black">
+              Alle Angebote anzeigen
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loading ? (
+              <p>Lade Eigentumswohnungen...</p>
+            ) : (
+              <>
+                {sales.map((item) => (
+                  <Link key={item.id} to={`/eigentumswohnungen/${item.id}`} className="group cursor-pointer">
+                    <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-4 shadow-sm">
+                      <img 
+                        src={item.images?.[0] || 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&q=80'} 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        alt={item.title} 
+                      />
+                    </div>
+                    <h3 className="font-bold text-lg group-hover:text-airbnb-red transition-colors">{item.title}</h3>
+                    <p className="text-text-secondary">{item.location}</p>
+                  </Link>
+                ))}
+                {/* Fixed Teaser #3 for Sales */}
+                <TeaserCard title="Premium Penthouse Projekt" imgUrl="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80" />
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Location / Map Section */}
+      <section className="bg-gray-900 text-white py-24">
+        <div className="max-w-[1280px] mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Hier finden Sie uns</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Unser Büro befindet sich zentral in Ahlbeck. Kommen Sie gerne auf einen Kaffee vorbei und wir besprechen Ihre Wünsche rund um Ihre Wunschimmobilie auf Usedom.
+            </p>
+          </div>
+          
+          <div className="rounded-3xl overflow-hidden h-[450px] shadow-2xl border border-gray-800 relative max-w-5xl mx-auto">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2346.505342417!2d14.1843232!3d53.9416556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47ab04470d00f681%3A0x6b3b246a4e320f9!2sLindenstra%C3%9Fe%2082%2C%2017419%20Heringsdorf!5e0!3m2!1sde!2sde!4v1714995000000!5m2!1sde!2sde" 
+              width="100%" 
+              height="100%" 
+              style={{ border: 0 }} 
+              allowFullScreen={true} 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-black px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-medium">
+              <MapPin size={16} className="text-airbnb-red" />
+              <span className="text-sm">Lindenstraße 82, 17419 Ahlbeck</span>
+            </div>
           </div>
         </div>
       </section>
