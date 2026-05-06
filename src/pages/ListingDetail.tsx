@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { RENTALS, SALES } from '@/src/constants';
 import ImageGallery from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
-import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check } from 'lucide-react';
+import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -142,10 +142,20 @@ export default function ListingDetail() {
                     const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich interessiere mich für das Objekt "${listing.title}" in ${listing.location} (${listing.price}).\n\nBitte senden Sie mir weitere Informationen.\n\nMit freundlichen Grüßen`);
                     window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
                   }}
-                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-4"
+                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2"
                 >
                   {listing.type === 'rental' ? 'Reservierungsanfrage' : 'Exposé anfordern'}
                 </button>
+
+                <a 
+                  href={`https://wa.me/4915565224488?text=${encodeURIComponent(`Hallo, ich interessiere mich für das Objekt: ${listing.title} in ${listing.location}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full border border-black text-black py-3 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors mb-4 flex items-center justify-center gap-2"
+                >
+                  <MessageCircle size={20} className="text-green-600" />
+                  WhatsApp Anfrage
+                </a>
                 <p className="text-center text-sm text-text-secondary mb-4">Dir wird noch nichts berechnet</p>
                 
                 {listing.type === 'rental' && (

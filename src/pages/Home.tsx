@@ -51,9 +51,9 @@ export default function Home() {
             <motion.img
               key={currentImageIndex}
               src={HERO_IMAGES[currentImageIndex]}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 1.5, ease: "easeInOut" }}
               className="absolute inset-0 w-full h-full object-cover"
               alt="Hero Strand Usedom"

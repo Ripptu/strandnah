@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Globe, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Globe, Facebook, Instagram, Twitter, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -14,6 +14,16 @@ export default function Footer() {
             <Link to="/impressum" className="hover:underline">Impressum</Link>
             <span className="hidden md:inline">·</span>
             <Link to="/agb" className="hover:underline">AGB</Link>
+            <span className="hidden md:inline">·</span>
+            <a 
+              href="https://wa.me/4915565224488" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center gap-1 hover:underline"
+            >
+              <MessageCircle size={14} className="text-green-600" />
+              WhatsApp: +49 15565 224488
+            </a>
           </div>
           
           <div className="flex items-center gap-4">
