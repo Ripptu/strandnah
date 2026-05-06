@@ -5,26 +5,24 @@ import { getBlockedDatesFromIcal } from '@/src/lib/ical';
 
 interface Props {
   icalUrl?: string;
+  onDateChange: (range: [Date, Date] | null) => void;
 }
 
-export default function BookingCalendar({ icalUrl }: Props) {
-  const [value, onChange] = useState<any>(new Date());
+export default function BookingCalendar({ icalUrl, onDateChange }: Props) {
+  const [selectedRange, setSelectedRange] = useState<any>(null);
   const [bookedDays, setBookedDays] = useState<Date[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (icalUrl) {
       setLoading(true);
-      // In a real app, you would fetch this from your backend to avoid CORS
-      // For demo purposes, we'll use a mocked fetch if it fails
       getBlockedDatesFromIcal(icalUrl)
         .then(dates => {
-          setBookedDays(dates);
+          setBookedDays(dates.map(d => new Date(d)));
           setLoading(false);
         })
         .catch(() => setLoading(false));
     } else {
-      // Dummy logic if no URL provided
       setBookedDays([
         new Date(2026, 4, 10),
         new Date(2026, 4, 11),
@@ -35,12 +33,27 @@ export default function BookingCalendar({ icalUrl }: Props) {
     }
   }, [icalUrl]);
 
+  const handleDateChange = (value: any) => {
+    setSelectedRange(value);
+    onDateChange(value);
+  };
+
+  const tileDisabled = ({ date, view }: any) => {
+    if (view === 'month') {
+      const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
+      const booked = bookedDays.find(d => d.toDateString() === date.toDateString());
+      return isPast || !!booked;
+    }
+    return false;
+  };
+
   const tileClassName = ({ date, view }: any) => {
     if (view === 'month') {
       if (bookedDays.find(d => d.toDateString() === date.toDateString())) {
-        return 'booked';
+        return 'booked text-gray-300 line-through';
       }
     }
+    return null;
   };
 
   return (
@@ -53,26 +66,31 @@ export default function BookingCalendar({ icalUrl }: Props) {
           </div>
         </div>
       )}
-      <h3 className="text-xl font-bold mb-6">Verfügbarkeit prüfen</h3>
+      <h3 className="text-xl font-bold mb-6">Zeitraum auswählen</h3>
       <div className="calendar-container">
         <Calendar 
-          onChange={onChange} 
-          value={value} 
+          onChange={handleDateChange} 
+          value={selectedRange} 
           selectRange={true}
           tileClassName={tileClassName}
+          tileDisabled={tileDisabled}
+          minDate={new Date()}
+          className="w-full border-none font-sans"
         />
       </div>
-      <div className="mt-8 flex items-center justify-between text-sm text-text-secondary">
+      <div className="mt-8 flex items-center gap-4 text-xs font-medium uppercase tracking-wider text-text-secondary">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-airbnb-red rounded-full"></div>
-          <span>Ausgewählt</span>
+          <div className="w-3 h-3 bg-black rounded-full"></div>
+          <span>Gewählt</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gray-100 rounded-full border border-gray-300"></div>
-          <span>Verfügbar</span>
+          <div className="w-3 h-3 bg-gray-100 rounded-full border border-gray-200"></div>
+          <span>Frei</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
+          <div className="w-3 h-3 bg-gray-200 rounded-full flex items-center justify-center">
+            <div className="w-full h-[1px] bg-gray-400 rotate-45"></div>
+          </div>
           <span>Belegt</span>
         </div>
       </div>

@@ -44,60 +44,83 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative h-screen w-full overflow-hidden">
+      <section className="relative h-screen w-full overflow-hidden bg-black">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-black/40 z-10" />
-          <AnimatePresence mode="wait">
-            <motion.img
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 z-10" />
+          <AnimatePresence mode="popLayout">
+            <motion.div
               key={currentImageIndex}
-              src={HERO_IMAGES[currentImageIndex]}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              className="absolute inset-0 w-full h-full object-cover"
-              alt="Hero Strand Usedom"
-              referrerPolicy="no-referrer"
-            />
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                opacity: { duration: 2, ease: "easeInOut" },
+                scale: { duration: 8, ease: "linear" }
+              }}
+              className="absolute inset-0 w-full h-full"
+            >
+              <img
+                src={HERO_IMAGES[currentImageIndex]}
+                className="w-full h-full object-cover"
+                alt="Usedom Impression"
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
           </AnimatePresence>
         </div>
 
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white px-6 text-center">
           <motion.h1 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-6 max-w-4xl"
           >
             Fühlen Sie sich auf Usedom wie zu Hause.
           </motion.h1>
+
           <motion.p 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-lg md:text-2xl font-light mb-10 max-w-2xl opacity-90"
           >
             Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
           </motion.p>
+
           <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.9, duration: 0.8 }}
             className="flex flex-col sm:flex-row gap-4"
           >
             <Link 
               to="/ferienwohnungen" 
-              className="bg-airbnb-red text-white px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform"
+              className="bg-airbnb-red text-white px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
             >
               Buchungsanfrage stellen
             </Link>
             <Link 
               to="/kontakt" 
-              className="bg-white text-text-primary px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform"
+              className="bg-white text-text-primary px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
             >
               Kontakt aufnehmen
             </Link>
           </motion.div>
+        </div>
+
+        {/* Hero Navigation Dots */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+          {HERO_IMAGES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentImageIndex(idx)}
+              className={cn(
+                "h-1 transition-all duration-500 rounded-full",
+                currentImageIndex === idx ? "w-12 bg-white" : "w-6 bg-white/30 hover:bg-white/50"
+              )}
+            />
+          ))}
         </div>
       </section>
 

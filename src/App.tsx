@@ -10,6 +10,8 @@ import Location from './pages/Location';
 import Contact from './pages/Contact';
 import ListingDetail from './pages/ListingDetail';
 import Impressum from './pages/Impressum';
+import Datenschutz from './pages/Datenschutz';
+import AGB from './pages/AGB';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import { auth } from './lib/firebase';
@@ -52,8 +54,8 @@ export default function App() {
             <Route path="/lage" element={<Location />} />
             <Route path="/kontakt" element={<Contact />} />
             <Route path="/impressum" element={<Impressum />} />
-            <Route path="/datenschutz" element={<Placeholder title="Datenschutz" />} />
-            <Route path="/agb" element={<Placeholder title="AGB" />} />
+            <Route path="/datenschutz" element={<Datenschutz />} />
+            <Route path="/agb" element={<AGB />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route 
               path="/admin/dashboard" 

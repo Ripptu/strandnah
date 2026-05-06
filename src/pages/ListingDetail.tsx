@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { RENTALS, SALES } from '@/src/constants';
 import ImageGallery from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
+import PricingTable from '@/src/components/PricingTable';
+import { calculateBookingDetails, getPriceForDate, SEASONS } from '@/src/lib/pricing';
 import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -11,6 +13,9 @@ export default function ListingDetail() {
   const { id } = useParams();
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedRange, setSelectedRange] = useState<[Date, Date] | null>(null);
+  const [guests, setGuests] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -34,11 +39,102 @@ export default function ListingDetail() {
     fetchListing();
   }, [id]);
 
+  const calculateNights = () => {
+    if (!selectedRange || !selectedRange[0] || !selectedRange[1]) return 0;
+    const diffTime = Math.abs(selectedRange[1].getTime() - selectedRange[0].getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const getPriceNumber = (priceStr: string) => {
+    return parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
+  };
+
+  const booking = selectedRange && selectedRange[0] && selectedRange[1] 
+    ? calculateBookingDetails(selectedRange[0], selectedRange[1])
+    : null;
+
+  const nights = booking?.numNights || 0;
+  const subtotal = booking?.totalBasePrice || 0;
+  const cleaningFee = listing?.type === 'rental' ? (booking?.cleaningFee || 85) : 0;
+  const serviceFee = booking?.serviceFee || 0;
+  const total = booking?.total || 0;
+
+  // Check minimum stay
+  const getMinNights = () => {
+    if (!selectedRange || !selectedRange[0]) return 0;
+    const date = selectedRange[0];
+    const month = date.getMonth();
+    const day = date.getDate();
+    const currentVal = month * 100 + day;
+
+    for (const season of SEASONS) {
+      for (const period of season.periods) {
+        const startVal = period.start.month * 100 + period.start.day;
+        const endVal = period.end.month * 100 + period.end.day;
+        if (startVal <= endVal) {
+          if (currentVal >= startVal && currentVal <= endVal) return period.minNights;
+        } else {
+          if (currentVal >= startVal || currentVal <= endVal) return period.minNights;
+        }
+      }
+    }
+    return 3; // Default
+  };
+
+  const minNightsRequired = getMinNights();
+  const isMinStayMet = nights >= minNightsRequired;
+
+  const currentPricePerNight = selectedRange && selectedRange[0] 
+    ? getPriceForDate(selectedRange[0]) 
+    : (listing ? getPriceNumber(listing.price) : 0);
+
+  const handleReserve = () => {
+    if (!selectedRange) {
+      // If no range selected, scroll to calendar
+      const calendar = document.querySelector('.calendar-container');
+      calendar?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    if (!isMinStayMet && listing.type === 'rental') {
+      alert(`Mindestaufenthalt für diesen Zeitraum sind ${minNightsRequired} Nächte.`);
+      return;
+    }
+    
+    // Simulate booking process
+    setShowSuccess(true);
+    setTimeout(() => {
+      const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
+      const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nReinigung: ${cleaningFee} €\nService: ${serviceFee} €\nGesamt: ${total} €\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+      window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
+    }, 2000);
+  };
+
   if (loading) return <div className="pt-40 text-center animate-pulse">Lade Objekt-Details...</div>;
   if (!listing) return <div className="pt-40 text-center">Objekt nicht gefunden.</div>;
 
   return (
     <div className="pt-24 pb-20">
+      {showSuccess && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-8 md:p-12 text-center max-w-md w-full shadow-2xl">
+            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Check size={40} />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Anfrage gesendet!</h2>
+            <p className="text-text-secondary mb-8 leading-relaxed">
+              Vielen Dank für dein Interesse. Wir leiten dich nun zu deiner E-Mail App weiter, um die Anfrage abzuschließen.
+            </p>
+            <button 
+              onClick={() => setShowSuccess(false)}
+              className="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors"
+            >
+              Schließen
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-[1280px] mx-auto px-6 lg:px-20">
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">{listing.title}</h1>
@@ -92,20 +188,8 @@ export default function ListingDetail() {
               </p>
             </div>
 
-            <div className="py-8">
-              <h3 className="text-xl font-bold mb-6">Was diese Unterkunft bietet</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {listing.amenities?.map((amenity: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-4 text-text-primary">
-                    <Check size={20} className="text-green-600" />
-                    <span>{amenity}</span>
-                  </div>
-                ))}
-                {(!listing.amenities || listing.amenities.length === 0) && (
-                  <p className="text-text-secondary text-sm italic">Keine besonderen Ausstattungsmerkmale angegeben.</p>
-                )}
-              </div>
-            </div>
+            {listing.type === 'rental' && <PricingTable />}
+
           </div>
 
           {/* Sidebar Area */}
@@ -114,7 +198,7 @@ export default function ListingDetail() {
               <div className="p-6 rounded-2xl border border-border-main shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <span className="text-2xl font-bold">{listing.price}</span>
+                    <span className="text-2xl font-bold">{currentPricePerNight} €</span>
                     {listing.type === 'rental' && <span className="text-text-secondary"> / Nacht</span>}
                   </div>
                 </div>
@@ -123,28 +207,38 @@ export default function ListingDetail() {
                   <div className="grid grid-cols-2 border-b border-gray-400">
                     <div className="p-3 border-r border-gray-400">
                       <p className="text-[10px] font-bold uppercase">Check-in</p>
-                      <p className="text-sm">01.06.2026</p>
+                      <p className="text-sm">
+                        {selectedRange?.[0] ? selectedRange[0].toLocaleDateString('de-DE') : 'Datum wählen'}
+                      </p>
                     </div>
                     <div className="p-3">
                       <p className="text-[10px] font-bold uppercase">Check-out</p>
-                      <p className="text-sm">08.06.2026</p>
+                      <p className="text-sm">
+                        {selectedRange?.[1] ? selectedRange[1].toLocaleDateString('de-DE') : 'Datum wählen'}
+                      </p>
                     </div>
                   </div>
                   <div className="p-3">
                     <p className="text-[10px] font-bold uppercase">Gäste</p>
-                    <p className="text-sm">1 Gast</p>
+                    <select 
+                      value={guests} 
+                      onChange={(e) => setGuests(parseInt(e.target.value))}
+                      className="w-full text-sm bg-transparent border-none p-0 focus:ring-0 cursor-pointer"
+                    >
+                      {[1, 2, 3, 4, 5, 6].map(num => (
+                        <option key={num} value={num}>{num} {num === 1 ? 'Gast' : 'Gäste'}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 <button 
-                  onClick={() => {
-                    const subject = encodeURIComponent(`Anfrage für: ${listing.title} (${listing.location})`);
-                    const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich interessiere mich für das Objekt "${listing.title}" in ${listing.location} (${listing.price}).\n\nBitte senden Sie mir weitere Informationen.\n\nMit freundlichen Grüßen`);
-                    window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
-                  }}
-                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2"
+                  onClick={handleReserve}
+                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  {listing.type === 'rental' ? 'Reservierungsanfrage' : 'Exposé anfordern'}
+                  {listing.type === 'rental' 
+                    ? (selectedRange ? 'Reservieren' : 'Verfügbarkeit prüfen') 
+                    : 'Exposé anfordern'}
                 </button>
 
                 <a 
@@ -158,29 +252,35 @@ export default function ListingDetail() {
                 </a>
                 <p className="text-center text-sm text-text-secondary mb-4">Dir wird noch nichts berechnet</p>
                 
-                {listing.type === 'rental' && (
-                  <div className="space-y-3">
+                {listing.type === 'rental' && selectedRange && booking && (
+                  <div className="space-y-3 pt-4 animate-in fade-in slide-in-from-top-2 duration-500 border-t border-border-light">
+                    {!isMinStayMet && (
+                      <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100 flex items-center gap-2 mb-4">
+                        <Shield size={14} />
+                        <span>Mindestaufenthalt: {minNightsRequired} Nächte erforderlich.</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between underline text-text-secondary">
-                      <span>{listing.price} x 7 Nächte</span>
-                      <span>1.015 €</span>
+                      <span>Ø {Math.round(subtotal / nights)} € x {nights} Nächte</span>
+                      <span>{subtotal.toLocaleString('de-DE')} €</span>
                     </div>
                     <div className="flex items-center justify-between underline text-text-secondary">
                       <span>Reinigungsgebühr</span>
-                      <span>80 €</span>
+                      <span>{cleaningFee.toLocaleString('de-DE')} €</span>
                     </div>
                     <div className="flex items-center justify-between underline text-text-secondary">
                       <span>Servicegebühr</span>
-                      <span>140 €</span>
+                      <span>{serviceFee.toLocaleString('de-DE')} €</span>
                     </div>
                     <div className="pt-4 border-t border-border-light flex items-center justify-between font-bold text-lg">
                       <span>Gesamt</span>
-                      <span>1.235 €</span>
+                      <span>{total.toLocaleString('de-DE')} €</span>
                     </div>
                   </div>
                 )}
               </div>
 
-              <BookingCalendar icalUrl={listing.icalUrl} />
+              <BookingCalendar icalUrl={listing.icalUrl} onDateChange={setSelectedRange} />
             </div>
           </div>
         </div>
