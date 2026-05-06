@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "Listing": {
+      "title": "Listing",
+      "description": "A property listing for rent or sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "location": { "type": "string" },
+        "price": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviews": { "type": "number" },
+        "images": { 
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "features": { 
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["rental", "sale"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "location", "price", "images", "type"]
+    }
+  },
+  "firestore": {
+    "listings": {
+      "schema": "Listing",
+      "description": "Collection of all property listings"
+    }
+  }
+}
