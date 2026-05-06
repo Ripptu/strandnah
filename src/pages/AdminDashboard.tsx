@@ -17,7 +17,8 @@ export default function AdminDashboard() {
     type: 'rental',
     images: [],
     features: [],
-    amenities: []
+    amenities: [],
+    icalUrl: ''
   });
 
   const [newImage, setNewImage] = useState('');
@@ -109,7 +110,8 @@ export default function AdminDashboard() {
         type: 'rental',
         images: [],
         features: [],
-        amenities: []
+        amenities: [],
+        icalUrl: ''
       });
     } catch (error) {
       console.error("Save error:", error);
@@ -131,6 +133,7 @@ export default function AdminDashboard() {
       images: listing.images || [],
       features: listing.features || [],
       amenities: listing.amenities || [],
+      icalUrl: listing.icalUrl || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -306,6 +309,18 @@ export default function AdminDashboard() {
                   required
                   disabled={submitting}
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase mb-1">iCal URL (optional - für Verfügbarkeitssync)</label>
+                <input 
+                  type="text" 
+                  value={formData.icalUrl}
+                  onChange={(e) => setFormData({...formData, icalUrl: e.target.value})}
+                  placeholder="https://www.airbnb.de/calendar/ical/..."
+                  className="w-full p-3 rounded-lg border border-border-main" 
+                  disabled={submitting}
+                />
+                <p className="mt-1 text-[10px] text-text-secondary italic">Hinweis: Externe URLs können aufgrund von CORS Einschränkungen im Browser blockiert werden.</p>
               </div>
             </div>
 

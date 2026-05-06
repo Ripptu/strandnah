@@ -180,7 +180,7 @@ export default function ListingDetail() {
                 )}
               </div>
 
-              <BookingCalendar />
+              <BookingCalendar icalUrl={listing.icalUrl} />
             </div>
           </div>
         </div>

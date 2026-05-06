@@ -1,18 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { getBlockedDatesFromIcal } from '@/src/lib/ical';
 
-export default function BookingCalendar() {
+interface Props {
+  icalUrl?: string;
+}
+
+export default function BookingCalendar({ icalUrl }: Props) {
   const [value, onChange] = useState<any>(new Date());
+  const [bookedDays, setBookedDays] = useState<Date[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Dummy logic: Mark some days as booked
-  const bookedDays = [
-    new Date(2026, 4, 10),
-    new Date(2026, 4, 11),
-    new Date(2026, 4, 12),
-    new Date(2026, 4, 20),
-    new Date(2026, 4, 21),
-  ];
+  useEffect(() => {
+    if (icalUrl) {
+      setLoading(true);
+      // In a real app, you would fetch this from your backend to avoid CORS
+      // For demo purposes, we'll use a mocked fetch if it fails
+      getBlockedDatesFromIcal(icalUrl)
+        .then(dates => {
+          setBookedDays(dates);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    } else {
+      // Dummy logic if no URL provided
+      setBookedDays([
+        new Date(2026, 4, 10),
+        new Date(2026, 4, 11),
+        new Date(2026, 4, 12),
+        new Date(2026, 4, 20),
+        new Date(2026, 4, 21),
+      ]);
+    }
+  }, [icalUrl]);
 
   const tileClassName = ({ date, view }: any) => {
     if (view === 'month') {
@@ -23,7 +44,15 @@ export default function BookingCalendar() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-border-light p-6 shadow-sm">
+    <div className="bg-white rounded-2xl border border-border-light p-6 shadow-sm relative">
+      {loading && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-2xl">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-medium">Synchronisiere...</span>
+          </div>
+        </div>
+      )}
       <h3 className="text-xl font-bold mb-6">Verfügbarkeit prüfen</h3>
       <div className="calendar-container">
         <Calendar 
