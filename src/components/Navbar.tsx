@@ -1,13 +1,31 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, MessageCircle } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [logoClicks, setLogoClicks] = useState(0);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === '/';
+
+  const handleLogoClick = () => {
+    navigate('/');
+    
+    setLogoClicks(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 5) {
+        navigate('/admin');
+        return 0;
+      }
+      return newCount;
+    });
+
+    // Reset counter after 2 seconds of inactivity
+    setTimeout(() => setLogoClicks(0), 2000);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,16 +54,19 @@ export default function Navbar() {
     >
       <div className="max-w-[1280px] mx-auto w-full px-6 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
+        <div 
+          onClick={handleLogoClick}
+          className="cursor-pointer flex items-center gap-3"
+        >
           <img 
             src="https://s1.directupload.eu/images/260506/r4mvooig.webp" 
             alt="Strandnah Usedom Logo" 
             className={cn(
-              "h-12 w-auto object-contain transition-all",
+              "h-12 w-auto object-contain transition-all active:scale-95",
               isScrolled || !isHome ? "" : "brightness-0 invert"
             )}
           />
-        </Link>
+        </div>
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8">
@@ -66,7 +87,7 @@ export default function Navbar() {
         {/* Action Buttons */}
         <div className="flex items-center gap-4">
           <a
-            href="https://wa.me/4915100000000"
+            href="https://wa.me/4915565224488"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -99,7 +120,7 @@ export default function Navbar() {
             </Link>
           ))}
           <a
-            href="https://wa.me/4915100000000"
+            href="https://wa.me/4915565224488"
             className="flex items-center justify-center gap-2 bg-[#25D366] text-white px-4 py-3 rounded-xl text-lg font-semibold"
           >
             <MessageCircle size={20} />
