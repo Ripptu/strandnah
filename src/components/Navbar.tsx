@@ -39,7 +39,7 @@ export default function Navbar() {
     { name: 'Startseite', href: '/' },
     { name: 'Ferienwohnungen', href: '/ferienwohnungen' },
     { name: 'Eigentumswohnungen', href: '/eigentumswohnungen' },
-    { name: 'Lage', href: '/lage' },
+    { name: 'Lage & Umgebung', href: '/lage' },
     { name: 'Kontakt', href: '/kontakt' },
   ];
 
@@ -62,7 +62,7 @@ export default function Navbar() {
             src="https://s1.directupload.eu/images/260506/r4mvooig.webp" 
             alt="Strandnah Usedom Logo" 
             className={cn(
-              "h-12 w-auto object-contain transition-all active:scale-95",
+              "h-16 w-auto object-contain transition-all active:scale-95",
               isScrolled || !isHome ? "" : "brightness-0 invert"
             )}
           />

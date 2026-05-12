@@ -4,12 +4,24 @@ import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTi
 import { Listing, RENTALS, SALES } from '@/src/constants';
 import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database } from 'lucide-react';
 
+const AREA_LABELS: Record<string, string> = {
+  livingRoom: 'Wohnzimmer',
+  kitchen: 'Küche',
+  dining: 'Essbereich',
+  bedroom1: 'Schlafzimmer 1',
+  bedroom2: 'Schlafzimmer 2',
+  bedroom3: 'Schlafzimmer 3',
+  bathroom: 'Badezimmer',
+  guestWc: 'Gäste WC',
+  outdoor: 'Aussenbereich'
+};
+
 export default function AdminDashboard() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[] }>>({
+  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string>, pdfLinks: string[] }>>({
     title: '',
     location: '',
     price: '',
@@ -18,12 +30,15 @@ export default function AdminDashboard() {
     images: [],
     features: [],
     amenities: [],
+    areaImages: {},
+    pdfLinks: [],
     icalUrl: ''
   });
 
   const [newImage, setNewImage] = useState('');
   const [newFeature, setNewFeature] = useState('');
   const [newAmenity, setNewAmenity] = useState('');
+  const [newPdfLink, setNewPdfLink] = useState('');
 
   const fetchListings = async () => {
     // onSnapshot handles this automatically, but we keep this for the refresh button
@@ -111,6 +126,8 @@ export default function AdminDashboard() {
         images: [],
         features: [],
         amenities: [],
+        areaImages: {},
+        pdfLinks: [],
         icalUrl: ''
       });
     } catch (error) {
@@ -133,6 +150,8 @@ export default function AdminDashboard() {
       images: listing.images || [],
       features: listing.features || [],
       amenities: listing.amenities || [],
+      areaImages: listing.areaImages || {},
+      pdfLinks: listing.pdfLinks || [],
       icalUrl: listing.icalUrl || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -200,6 +219,21 @@ export default function AdminDashboard() {
       const updated = [...formData.amenities];
       updated.splice(index, 1);
       setFormData({ ...formData, amenities: updated });
+    }
+  };
+
+  const addPdfLink = () => {
+    if (newPdfLink && formData.pdfLinks) {
+      setFormData({ ...formData, pdfLinks: [...formData.pdfLinks, newPdfLink] });
+      setNewPdfLink('');
+    }
+  };
+
+  const removePdfLink = (index: number) => {
+    if (formData.pdfLinks) {
+      const updated = [...formData.pdfLinks];
+      updated.splice(index, 1);
+      setFormData({ ...formData, pdfLinks: updated });
     }
   };
 
@@ -401,6 +435,55 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {formData.type === 'sale' && (
+                <div>
+                  <label className="block text-xs font-bold uppercase mb-1">PDF Dokumente (z.B. Grundriss URLs)</label>
+                  <div className="flex gap-2 mb-2">
+                    <input 
+                      type="text" 
+                      value={newPdfLink}
+                      onChange={(e) => setNewPdfLink(e.target.value)}
+                      placeholder="https://..."
+                      className="flex-grow p-3 rounded-lg border border-border-main" 
+                      disabled={submitting}
+                    />
+                    <button type="button" onClick={addPdfLink} disabled={submitting} className="bg-black text-white px-4 rounded-lg">Hinzufügen</button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {formData.pdfLinks?.map((link, i) => (
+                      <div key={i} className="bg-gray-100 px-3 py-2 rounded-lg text-sm flex justify-between items-center break-all">
+                        <span>{link}</span>
+                        <button type="button" onClick={() => removePdfLink(i)} className="text-red-500 shrink-0 ml-4">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold uppercase mb-4">Raum/Bereich Fotos (URLs)</label>
+                <div className="space-y-4">
+                  {Object.entries(AREA_LABELS).map(([key, label]) => (
+                    <div key={key} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                      <label className="w-32 text-sm font-semibold">{label}</label>
+                      <input 
+                        type="text" 
+                        value={formData.areaImages?.[key] || ''}
+                        onChange={(e) => setFormData({
+                          ...formData, 
+                          areaImages: { ...formData.areaImages, [key]: e.target.value }
+                        })}
+                        placeholder={`Bild-URL für ${label}`}
+                        className="flex-grow p-3 rounded-lg border border-border-main text-sm" 
+                        disabled={submitting}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex flex-col gap-4">
                 <button 
                   type="submit" 
@@ -415,7 +498,7 @@ export default function AdminDashboard() {
                     type="button" 
                     onClick={() => {
                       setEditingId(null);
-                      setFormData({ title: '', location: '', price: '', description: '', type: 'rental', images: [], features: [], amenities: [] });
+                      setFormData({ title: '', location: '', price: '', description: '', type: 'rental', images: [], features: [], amenities: [], areaImages: {}, pdfLinks: [] });
                     }}
                     className="w-full bg-gray-100 py-3 rounded-xl font-bold"
                     disabled={submitting}

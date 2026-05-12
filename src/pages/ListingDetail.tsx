@@ -9,6 +9,18 @@ import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2
 import { db } from '@/src/lib/firebase';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
+const AREA_LABELS: Record<string, string> = {
+  livingRoom: 'Wohnzimmer',
+  kitchen: 'Küche',
+  dining: 'Essbereich',
+  bedroom1: 'Schlafzimmer 1',
+  bedroom2: 'Schlafzimmer 2',
+  bedroom3: 'Schlafzimmer 3',
+  bathroom: 'Badezimmer',
+  guestWc: 'Gäste WC',
+  outdoor: 'Aussenbereich'
+};
+
 export default function ListingDetail() {
   const { id } = useParams();
   const [listing, setListing] = useState<any>(null);
@@ -18,6 +30,7 @@ export default function ListingDetail() {
   const [guests, setGuests] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -52,12 +65,14 @@ export default function ListingDetail() {
   };
 
   const booking = selectedRange && selectedRange[0] && selectedRange[1] 
-    ? calculateBookingDetails(selectedRange[0], selectedRange[1])
+    ? calculateBookingDetails(selectedRange[0], selectedRange[1], guests)
     : null;
 
   const nights = booking?.numNights || 0;
   const subtotal = booking?.totalBasePrice || 0;
-  const cleaningFee = listing?.type === 'rental' ? (booking?.cleaningFee || 85) : 0;
+  const cleaningFee = listing?.type === 'rental' ? (booking?.cleaningFee || 70) : 0;
+  const kurtaxe = listing?.type === 'rental' ? (booking?.kurtaxe || 0) : 0;
+  const linenFee = listing?.type === 'rental' ? (booking?.linenFee || 0) : 0;
   const serviceFee = booking?.serviceFee || 0;
   const total = booking?.total || 0;
 
@@ -124,7 +139,7 @@ export default function ListingDetail() {
       setShowSuccess(true);
       setTimeout(() => {
         const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
-        const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nReinigung: ${cleaningFee} €\nService: ${serviceFee} €\nGesamt: ${total} €\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+        const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nEndreinigung: ${cleaningFee} €\nWäschepaket: ${linenFee} €\nKurtaxe: ${kurtaxe} €\nService: ${serviceFee} €\nGesamt: ${total} €\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
         window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
       }, 2000);
     } catch (err: any) {
@@ -213,6 +228,52 @@ export default function ListingDetail() {
               </p>
             </div>
 
+            <div className="py-8 border-b border-border-light">
+              <h3 className="text-xl font-bold mb-6">Räume & Bereiche</h3>
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar">
+                {Object.entries(AREA_LABELS).map(([key, label]) => {
+                  const imgUrl = listing.areaImages?.[key] || `https://placehold.co/600x400/eeeeee/999999?text=${encodeURIComponent(label)}`;
+                  return (
+                    <div key={key} className="min-w-[200px] sm:min-w-[250px] snap-start flex-shrink-0">
+                      <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 border border-gray-100">
+                         <img src={imgUrl} className="w-full h-full object-cover" alt={label} />
+                      </div>
+                      <h4 className="font-semibold text-text-primary">{label}</h4>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="py-8 border-b border-border-light">
+              <h3 className="text-xl font-bold mb-6">Was bietet dir diese Unterkunft</h3>
+              {listing.amenities && listing.amenities.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {listing.amenities.map((amenity: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                       <Check size={20} className="text-gray-400" />
+                       <span>{amenity}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-text-secondary italic">Die Ausstattungsmerkmale werden demnächst ergänzt.</p>
+              )}
+            </div>
+
+            {listing.type === 'sale' && listing.pdfLinks && listing.pdfLinks.length > 0 && (
+              <div className="py-8 border-b border-border-light">
+                <h3 className="text-xl font-bold mb-6">Dokumente & Grundrisse</h3>
+                <div className="flex flex-wrap gap-4">
+                  {listing.pdfLinks.map((link: string, i: number) => (
+                    <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-black rounded-xl px-6 py-3 font-semibold hover:bg-gray-50 transition-colors">
+                       📄 Dokument {i + 1} ansehen
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {listing.type === 'rental' && <PricingTable />}
 
           </div>
@@ -228,8 +289,11 @@ export default function ListingDetail() {
                   </div>
                 </div>
 
-                <div className="border border-gray-300 rounded-xl overflow-hidden mb-4 hover:border-airbnb-red transition-colors duration-300">
-                  <div className="grid grid-cols-2 border-b border-gray-300">
+                <div className="border border-gray-300 rounded-xl overflow-visible mb-4 hover:border-airbnb-red transition-colors duration-300 relative">
+                  <div 
+                    className="grid grid-cols-2 border-b border-gray-300 cursor-pointer"
+                    onClick={() => setShowCalendar(!showCalendar)}
+                  >
                     <div className="p-3 border-r border-gray-300 hover:bg-gray-50 transition-colors">
                       <p className="text-[10px] font-bold uppercase text-gray-500">Check-in</p>
                       <p className="text-sm font-medium">
@@ -243,6 +307,28 @@ export default function ListingDetail() {
                       </p>
                     </div>
                   </div>
+                  {showCalendar && (
+                    <div className="absolute top-[80px] left-0 md:-left-[20px] w-full md:w-[400px] z-[100] bg-white rounded-2xl shadow-2xl">
+                      <BookingCalendar 
+                        listingId={listing.id} 
+                        icalUrl={listing.icalUrl} 
+                        onDateChange={(range) => {
+                          setSelectedRange(range);
+                          if (range && range[0] && range[1]) {
+                            setShowCalendar(false);
+                          }
+                        }} 
+                      />
+                      <div className="p-4 border-t border-gray-100 flex justify-end bg-white rounded-b-2xl">
+                        <button 
+                          onClick={() => setShowCalendar(false)} 
+                          className="bg-black text-white px-6 py-2 rounded-xl font-bold"
+                        >
+                          Fertig
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div className="p-3 relative group hover:bg-gray-50 transition-colors">
                     <p className="text-[10px] font-bold uppercase text-airbnb-red">Personenanzahl</p>
                     <div className="flex items-center">
@@ -251,7 +337,7 @@ export default function ListingDetail() {
                         onChange={(e) => setGuests(parseInt(e.target.value))}
                         className="w-full text-base font-medium bg-transparent border-none p-0 focus:ring-0 cursor-pointer appearance-none pr-8"
                       >
-                        {[1, 2, 3, 4, 5, 6].map(num => (
+                        {[1, 2, 3, 4].map(num => (
                           <option key={num} value={num} className="text-black">
                             {num} {num === 1 ? 'Gast' : 'Gäste'}
                           </option>
@@ -277,8 +363,8 @@ export default function ListingDetail() {
                     </>
                   ) : (
                     listing.type === 'rental' 
-                      ? (selectedRange ? 'Reservieren' : 'Verfügbarkeit prüfen') 
-                      : 'Exposé anfordern'
+                      ? 'Buchungsanfrage' 
+                      : 'Anfrage'
                   )}
                 </button>
 
@@ -310,13 +396,23 @@ export default function ListingDetail() {
                       <span>{subtotal.toLocaleString('de-DE')} €</span>
                     </div>
                     <div className="flex items-center justify-between underline text-text-secondary">
-                      <span>Reinigungsgebühr</span>
+                      <span>Endreinigung</span>
                       <span>{cleaningFee.toLocaleString('de-DE')} €</span>
                     </div>
                     <div className="flex items-center justify-between underline text-text-secondary">
-                      <span>Servicegebühr</span>
-                      <span>{serviceFee.toLocaleString('de-DE')} €</span>
+                      <span>Wäscheset</span>
+                      <span>{linenFee.toLocaleString('de-DE')} €</span>
                     </div>
+                    <div className="flex items-center justify-between underline text-text-secondary">
+                      <span>Kurtaxe</span>
+                      <span>{kurtaxe.toLocaleString('de-DE')} €</span>
+                    </div>
+                    {serviceFee > 0 && (
+                      <div className="flex items-center justify-between underline text-text-secondary">
+                        <span>Servicegebühr</span>
+                        <span>{serviceFee.toLocaleString('de-DE')} €</span>
+                      </div>
+                    )}
                     <div className="pt-4 border-t border-border-light flex items-center justify-between font-bold text-lg">
                       <span>Gesamt</span>
                       <span>{total.toLocaleString('de-DE')} €</span>
@@ -324,12 +420,6 @@ export default function ListingDetail() {
                   </div>
                 )}
               </div>
-
-              <BookingCalendar 
-                listingId={listing.id} 
-                icalUrl={listing.icalUrl} 
-                onDateChange={setSelectedRange} 
-              />
             </div>
           </div>
         </div>

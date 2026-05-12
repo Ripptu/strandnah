@@ -45,7 +45,7 @@ export default function Location() {
           
           <div className="rounded-3xl overflow-hidden h-[450px] shadow-xl border border-border-light relative">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2346.505342417!2d14.1843232!3d53.9416556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47ab04470d00f681%3A0x6b3b246a4e320f9!2sLindenstra%C3%9Fe%2082%2C%2017419%20Heringsdorf!5e0!3m2!1sde!2sde!4v1714995000000!5m2!1sde!2sde" 
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d152174.453303799!2d13.916962450000002!3d53.9458213!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sde!2sde!4v1714995000000!5m2!1sde!2sde" 
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 
@@ -55,10 +55,48 @@ export default function Location() {
             ></iframe>
             <div className="absolute top-4 left-4 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
               <MapPin size={16} className="text-airbnb-red" />
-              <span className="text-sm font-bold">Lindenstraße 82, Ahlbeck</span>
+              <span className="text-sm font-bold">Insel Usedom</span>
             </div>
           </div>
         </div>
+
+        <section className="mb-24">
+          <h2 className="text-3xl font-bold mb-10">Umgebung & Aktivitäten</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="p-8 rounded-3xl bg-gray-50 border border-gray-100 flex flex-col h-full">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6">
+                <Sun className="text-airbnb-red" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">OstseeTherme Usedom</h3>
+              <p className="text-text-secondary mb-6 flex-grow">Entspannung pur bei jedem Wetter direkt im Seebad Heringsdorf mit herrlicher Thermal-Sole.</p>
+              <a href="https://www.ostseetherme-usedom.de" target="_blank" rel="noopener noreferrer" className="text-airbnb-red font-bold flex items-center gap-2 hover:underline">
+                Website besuchen <Waves size={16} />
+              </a>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-gray-50 border border-gray-100 flex flex-col h-full">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6">
+                <MapPin className="text-airbnb-red" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Seebrücke Ahlbeck</h3>
+              <p className="text-text-secondary mb-6 flex-grow">Die älteste Seebrücke Deutschlands und das Wahrzeichen der Insel – nur wenige Minuten entfernt.</p>
+              <a href="https://www.kaiserbaeder-auf-usedom.de/seebruecke-ahlbeck/" target="_blank" rel="noopener noreferrer" className="text-airbnb-red font-bold flex items-center gap-2 hover:underline">
+                Mehr erfahren <Waves size={16} />
+              </a>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-gray-50 border border-gray-100 flex flex-col h-full">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6">
+                <Bike className="text-airbnb-red" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Naturpark Usedom</h3>
+              <p className="text-text-secondary mb-6 flex-grow">Entdecken Sie das „Achterland“ mit seinen Seen, Mooren und malerischen Dörfern mit dem Rad.</p>
+              <a href="https://www.naturpark-usedom.de" target="_blank" rel="noopener noreferrer" className="text-airbnb-red font-bold flex items-center gap-2 hover:underline">
+                Website besuchen <Waves size={16} />
+              </a>
+            </div>
+          </div>
+        </section>
 
         <section className="bg-black text-white rounded-3xl p-12 text-center overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-airbnb-red rounded-full -translate-y-1/2 translate-x-1/2 opacity-20 blur-3xl"></div>

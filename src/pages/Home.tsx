@@ -283,7 +283,7 @@ export default function Home() {
           
           <div className="rounded-3xl overflow-hidden h-[450px] shadow-2xl border border-gray-800 relative max-w-5xl mx-auto">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2346.505342417!2d14.1843232!3d53.9416556!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47ab04470d00f681%3A0x6b3b246a4e320f9!2sLindenstra%C3%9Fe%2082%2C%2017419%20Heringsdorf!5e0!3m2!1sde!2sde!4v1714995000000!5m2!1sde!2sde" 
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d152174.453303799!2d13.916962450000002!3d53.9458213!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sde!2sde!4v1714995000000!5m2!1sde!2sde" 
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 
@@ -293,7 +293,7 @@ export default function Home() {
             ></iframe>
             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-black px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-medium">
               <MapPin size={16} className="text-airbnb-red" />
-              <span className="text-sm">Lindenstraße 82, 17419 Ahlbeck</span>
+              <span className="text-sm">Insel Usedom</span>
             </div>
           </div>
         </div>

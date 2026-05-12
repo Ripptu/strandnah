@@ -19,6 +19,28 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "amenities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "areaImages": {
+          "type": "object",
+          "properties": {
+            "livingRoom": { "type": "string" },
+            "kitchen": { "type": "string" },
+            "dining": { "type": "string" },
+            "bedroom1": { "type": "string" },
+            "bedroom2": { "type": "string" },
+            "bedroom3": { "type": "string" },
+            "bathroom": { "type": "string" },
+            "guestWc": { "type": "string" },
+            "outdoor": { "type": "string" }
+          }
+        },
+        "pdfLinks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "description": { "type": "string" },
         "type": { "type": "string", "enum": ["rental", "sale"] },
         "createdAt": { "type": "string", "format": "date-time" },

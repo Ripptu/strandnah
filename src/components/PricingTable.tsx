@@ -1,5 +1,6 @@
 import React from 'react';
 import { SEASONS } from '@/src/lib/pricing';
+import { Info } from 'lucide-react';
 
 export default function PricingTable() {
   // Sort seasons to match the expected display order: Hauptsaison, Nebensaison
@@ -9,43 +10,51 @@ export default function PricingTable() {
   );
 
   return (
-    <div className="py-12 border-t border-border-light">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-2xl font-bold">Preise & Saisonzeiten</h3>
-        <p className="text-xs text-text-secondary italic">Preisangaben pro Nacht</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+    <div className="py-8 border-b border-border-light text-text-primary">
+      <h3 className="text-xl font-bold mb-6">Preise & Saisonzeiten</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {sortedSeasons.map((season, sIdx) => (
-          <div key={sIdx} className="bg-white border border-black/5 rounded-lg overflow-hidden shadow-xl flex flex-col transition-transform hover:translate-y-[-4px] duration-300">
-            <div className="bg-[#1e293b] py-4 text-center">
-              <span className="text-[#c5a044] font-serif italic text-2xl tracking-wide">{season.name}</span>
-            </div>
-            <div className="bg-[#f1f5f9] py-12 text-center border-b border-gray-100">
-              <div className="flex items-baseline justify-center">
-                <span className="text-7xl font-serif font-bold text-[#1e293b] tracking-tighter">
-                  {season.name === 'Hauptsaison' ? '120' : '70 - 100'}
+          <div key={sIdx} className="border border-border-light rounded-2xl p-6 bg-white shadow-sm flex flex-col justify-between hover:border-black transition-colors">
+            <div>
+              <h4 className="text-lg font-bold mb-4">{season.name}</h4>
+              <div className="flex items-end gap-2 mb-6">
+                <span className="text-3xl font-bold">
+                   {season.basePrice} - {season.weekendPrice} €
                 </span>
-                <span className="text-3xl text-gray-400 font-light ml-2">EUR</span>
+                <span className="text-text-secondary mb-1">/ Nacht</span>
               </div>
-            </div>
-            <div className="flex-1 p-8 flex flex-col items-center justify-between bg-white">
-              <div className="space-y-6 w-full text-center">
+              <div className="space-y-3 mb-6">
                 {season.periods.map((period, pIdx) => (
-                  <div key={pIdx}>
-                    <p className="text-sm font-medium text-gray-800">
+                  <div key={pIdx} className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
+                    <span className="text-text-secondary">Zeitraum</span>
+                    <span className="font-semibold text-black">
                       {period.start.day.toString().padStart(2, '0')}.{(period.start.month + 1).toString().padStart(2, '0')}. - {period.end.day.toString().padStart(2, '0')}.{(period.end.month + 1).toString().padStart(2, '0')}.
-                    </p>
+                    </span>
                   </div>
                 ))}
               </div>
-              <div className="mt-8 pt-8 border-t border-gray-50 w-full text-center">
-                <p className="text-sm font-bold text-[#1e293b]">
-                  ab {season.periods[0].minNights} Übernachtungen
-                </p>
-              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-3 rounded-xl text-center">
+              <span className="text-sm font-semibold">Mindestaufenthalt: {season.periods[0].minNights} Nächte</span>
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 flex flex-col sm:flex-row items-start gap-4">
+        <div className="text-airbnb-red pt-1">
+          <Info size={24} />
+        </div>
+        <div className="text-sm text-text-secondary space-y-2">
+          <p><strong className="text-black">Zusätzliche Preishinweise:</strong></p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Die höheren Preise pro Nacht (100 € bzw. 140 €) gelten an den Wochenenden (Freitag & Samstag).</li>
+            <li><strong>Endreinigung:</strong> 70 € pauschal pro Aufenthalt</li>
+            <li><strong>Wäscheset:</strong> 20 € pro Person</li>
+            <li><strong>Kurtaxe:</strong> 3,70 € pro Person und Übernachtung (An- und Abreisetag zählen als 1 Tag)</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
