@@ -45,7 +45,7 @@ export default function Location() {
           
           <div className="rounded-3xl overflow-hidden h-[450px] shadow-xl border border-border-light relative">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d152174.453303799!2d13.916962450000002!3d53.9458213!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sde!2sde!4v1714995000000!5m2!1sde!2sde" 
+              src="https://maps.google.com/maps?q=Lindenstra%C3%9Fe%2082,%2017419%20Seebad%20Ahlbeck&t=&z=11&ie=UTF8&iwloc=&output=embed" 
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 
@@ -55,7 +55,7 @@ export default function Location() {
             ></iframe>
             <div className="absolute top-4 left-4 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
               <MapPin size={16} className="text-airbnb-red" />
-              <span className="text-sm font-bold">Insel Usedom</span>
+              <span className="text-sm font-bold">Lindenstraße 82, Ahlbeck</span>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import ImageGallery from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
 import PricingTable from '@/src/components/PricingTable';
 import { calculateBookingDetails, getPriceForDate, SEASONS } from '@/src/lib/pricing';
-import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2, Users } from 'lucide-react';
+import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2, Users, X } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -21,6 +21,15 @@ const AREA_LABELS: Record<string, string> = {
   outdoor: 'Aussenbereich'
 };
 
+const FALLBACK_AREA_IMAGES: Record<string, string> = {
+  livingRoom: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80',
+  kitchen: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80',
+  bedroom1: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&q=80',
+  dining: 'https://images.unsplash.com/photo-1617806118233-18e1c0945594?auto=format&fit=crop&q=80',
+  bathroom: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?auto=format&fit=crop&q=80',
+  outdoor: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80',
+};
+
 export default function ListingDetail() {
   const { id } = useParams();
   const [listing, setListing] = useState<any>(null);
@@ -31,6 +40,23 @@ export default function ListingDetail() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    street: '',
+    zip: '',
+    city: '',
+    remarks: '',
+    privacyAccepted: false
+  });
+
+  const handleInputChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -105,25 +131,26 @@ export default function ListingDetail() {
     ? getPriceForDate(selectedRange[0]) 
     : (listing ? getPriceNumber(listing.price) : 0);
 
-  const handleReserve = async () => {
-    if (!selectedRange) {
-      // If no range selected, scroll to calendar
-      const calendar = document.querySelector('.calendar-container');
-      calendar?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
+  const handleReserve = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
-    if (!isMinStayMet && listing.type === 'rental') {
-      alert(`Mindestaufenthalt für diesen Zeitraum sind ${minNightsRequired} Nächte.`);
-      return;
+    if (listing.type === 'rental') {
+      if (!selectedRange) {
+        const calendar = document.querySelector('.calendar-container');
+        calendar?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (!isMinStayMet) {
+        alert(`Mindestaufenthalt für diesen Zeitraum sind ${minNightsRequired} Nächte.`);
+        return;
+      }
     }
     
     setReserving(true);
     setError(null);
 
     try {
-      // Save booking to Firestore
-      if (listing.type === 'rental') {
+      if (listing.type === 'rental' && selectedRange) {
         const bookingsRef = collection(db, 'bookings');
         await addDoc(bookingsRef, {
           listingId: listing.id,
@@ -131,15 +158,33 @@ export default function ListingDetail() {
           endDate: selectedRange[1].toISOString(),
           guests,
           totalPrice: total,
+          contact: formData,
           status: 'pending',
+          createdAt: serverTimestamp()
+        });
+      } else if (listing.type === 'sale') {
+        await addDoc(collection(db, 'requests'), {
+          listingId: listing.id,
+          contact: formData,
           createdAt: serverTimestamp()
         });
       }
 
       setShowSuccess(true);
       setTimeout(() => {
-        const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
-        const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nEndreinigung: ${cleaningFee} €\nWäschepaket: ${linenFee} €\nKurtaxe: ${kurtaxe} €\nService: ${serviceFee} €\nGesamt: ${total} €\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+        const customerDetails = `\n\nMeine Kontaktdaten:\nName: ${formData.firstName} ${formData.lastName}\nE-Mail: ${formData.email}\nTelefon: ${formData.phone}\nAdresse: ${formData.street}, ${formData.zip} ${formData.city}\nBemerkung: ${formData.remarks || '-'}`;
+        
+        let subject = '';
+        let body = '';
+
+        if (listing.type === 'rental' && selectedRange) {
+          subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
+          body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nEndreinigung: ${cleaningFee} €\nWäschepaket: ${linenFee} €\nKurtaxe: ${kurtaxe} €\nGesamt: ${total} €${customerDetails}\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+        } else {
+          subject = encodeURIComponent(`Objektanfrage (Kauf): ${listing.title}`);
+          body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich interessiere mich für das Objekt "${listing.title}". Bitte senden Sie mir weitere Informationen oder ein Exposé zu.${customerDetails}\n\nMit freundlichen Grüßen`);
+        }
+        
         window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
       }, 2000);
     } catch (err: any) {
@@ -155,6 +200,23 @@ export default function ListingDetail() {
 
   return (
     <div className="pt-24 pb-20">
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-[300] bg-black bg-opacity-95 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setFullscreenImage(null)}>
+          <button 
+            className="absolute top-6 right-6 text-white hover:text-gray-300 p-2 z-[310] transition-colors"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <X size={36} />
+          </button>
+          <img 
+            src={fullscreenImage} 
+            alt="Fullscreen view" 
+            className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {showSuccess && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-8 md:p-12 text-center max-w-md w-full shadow-2xl">
@@ -230,15 +292,16 @@ export default function ListingDetail() {
 
             <div className="py-8 border-b border-border-light">
               <h3 className="text-xl font-bold mb-6">Räume & Bereiche</h3>
-              <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {Object.entries(AREA_LABELS).map(([key, label]) => {
-                  const imgUrl = listing.areaImages?.[key] || `https://placehold.co/600x400/eeeeee/999999?text=${encodeURIComponent(label)}`;
+                  const imgUrl = listing.areaImages?.[key] || FALLBACK_AREA_IMAGES[key] || `https://placehold.co/600x400/eeeeee/999999?text=${encodeURIComponent(label)}`;
                   return (
-                    <div key={key} className="min-w-[200px] sm:min-w-[250px] snap-start flex-shrink-0">
-                      <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 border border-gray-100">
-                         <img src={imgUrl} className="w-full h-full object-cover" alt={label} />
+                    <div key={key} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(imgUrl)}>
+                      <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative">
+                         <img src={imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={label} />
+                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                       </div>
-                      <h4 className="font-semibold text-text-primary">{label}</h4>
+                      <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}</h4>
                     </div>
                   );
                 })}
@@ -351,26 +414,49 @@ export default function ListingDetail() {
                   </div>
                 </div>
 
-                <button 
-                  onClick={handleReserve}
-                  disabled={reserving || !!error}
-                  className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {reserving ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin" />
-                      Wird verarbeitet...
-                    </>
-                  ) : (
-                    listing.type === 'rental' 
-                      ? 'Buchungsanfrage' 
-                      : 'Anfrage'
-                  )}
-                </button>
+                <form onSubmit={handleReserve}>
+                  <div className="space-y-4 mb-6 mt-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input required name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Vorname" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                      <input required name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Nachname" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input required name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Telefon" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                      <input required name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="E-Mail" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                    </div>
+                    <input required name="street" value={formData.street} onChange={handleInputChange} placeholder="Straße u. Hausnummer" className="p-3 border border-gray-300 rounded-xl w-full focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input required name="zip" value={formData.zip} onChange={handleInputChange} placeholder="PLZ" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                      <input required name="city" value={formData.city} onChange={handleInputChange} placeholder="Ort" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                    </div>
+                    <textarea name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="Bemerkung (optional)" className="p-3 border border-gray-300 rounded-xl w-full h-24 resize-none focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
+                    
+                    <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
+                      <input required type="checkbox" name="privacyAccepted" checked={formData.privacyAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
+                      <span>(Pflichtfeld) Ich habe die Datenschutzerklärung zur Kenntnis genommen. Ich stimme zu, dass meine Angaben und Daten zur Beantwortung meiner Anfrage elektronisch erhoben und gespeichert werden. Hinweis: Sie können Ihre Einwilligung jederzeit für die Zukunft per E-Mail an hallo@strandnah-usedom.de widerrufen.</span>
+                    </label>
+                  </div>
 
-                {error && (
-                  <p className="text-red-500 text-xs text-center mb-4">{error}</p>
-                )}
+                  <button 
+                    type="submit"
+                    disabled={!formData.privacyAccepted || reserving || !!error}
+                    className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {reserving ? (
+                      <>
+                        <Loader2 size={20} className="animate-spin" />
+                        Wird verarbeitet...
+                      </>
+                    ) : (
+                      listing.type === 'rental' 
+                        ? 'Buchungsanfrage' 
+                        : 'Anfrage absenden'
+                    )}
+                  </button>
+                  {error && (
+                    <p className="text-red-500 text-xs text-center mt-2 mb-4">{error}</p>
+                  )}
+                </form>
 
                 <a 
                   href={`https://wa.me/4915565224488?text=${encodeURIComponent(`Hallo, ich interessiere mich für das Objekt: ${listing.title} in ${listing.location}`)}`}

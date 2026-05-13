@@ -72,8 +72,11 @@ export function calculateBookingDetails(start: Date, end: Date, guests: number =
   let totalBasePrice = 0;
   const nights: { date: Date, price: number }[] = [];
   
-  let current = new Date(start);
-  while (current < end) {
+  const startObj = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endObj = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  
+  let current = new Date(startObj);
+  while (current < endObj) {
     const price = getPriceForDate(current);
     nights.push({ date: new Date(current), price });
     totalBasePrice += price;
@@ -82,12 +85,12 @@ export function calculateBookingDetails(start: Date, end: Date, guests: number =
 
   const numNights = nights.length;
   const cleaningFee = 70;
+  // Kurtaxe: 3,70 € je Person und Übernachtung (An- und Abfahrt zählen wir als Bestandteil der Nächte)
   const kurtaxe = 3.70 * guests * numNights;
   const linenFee = 20 * guests;
   
-  // Service fee usually percentage or fixed. Keeping an optional calculation if needed, else 0
   const totalBaseWithTax = totalBasePrice + cleaningFee + kurtaxe + linenFee;
-  const serviceFee = Math.round(totalBaseWithTax * 0.12);
+  const serviceFee = 0; // Keine Servicegebühr
   const total = totalBaseWithTax + serviceFee;
 
   return {

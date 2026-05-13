@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     const q = query(collection(db, 'listings'));
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const docs = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         setListings(docs);
         setLoading(false);
       },
@@ -75,8 +75,9 @@ export default function AdminDashboard() {
       
       allStatic.forEach(item => {
         const docRef = doc(collection(db, 'listings'));
+        const { id, ...itemData } = item;
         batch.set(docRef, {
-          ...item,
+          ...itemData,
           secret: 'vamela',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
