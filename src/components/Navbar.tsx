@@ -12,20 +12,24 @@ export default function Navbar() {
   const isHome = location.pathname === '/';
 
   const handleLogoClick = () => {
-    navigate('/');
-    
     setLogoClicks(prev => {
       const newCount = prev + 1;
       if (newCount >= 5) {
         navigate('/admin');
-        return 0;
+        return 0; // Reset counter after navigation
+      } else if (newCount === 1) {
+        navigate('/'); // Only navigate to home on the first click so we don't spam router
       }
       return newCount;
     });
-
-    // Reset counter after 2 seconds of inactivity
-    setTimeout(() => setLogoClicks(0), 2000);
   };
+
+  useEffect(() => {
+    if (logoClicks > 0 && logoClicks < 5) {
+      const timer = setTimeout(() => setLogoClicks(0), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [logoClicks]);
 
   useEffect(() => {
     const handleScroll = () => {

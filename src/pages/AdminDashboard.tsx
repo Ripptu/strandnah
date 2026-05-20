@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch, onSnapshot } from 'firebase/firestore';
 import { Listing, RENTALS, SALES } from '@/src/constants';
-import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database, Upload } from 'lucide-react';
 
 
 const AREA_LABELS: Record<string, string> = {
@@ -40,6 +40,76 @@ export default function AdminDashboard() {
   const [newFeature, setNewFeature] = useState('');
   const [newAmenity, setNewAmenity] = useState('');
   const [newPdfLink, setNewPdfLink] = useState('');
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+
+  const handleCloudinaryUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      setErrorStatus("Cloudinary Upload ist nicht konfiguriert. Bitte setzen Sie VITE_CLOUDINARY_CLOUD_NAME und VITE_CLOUDINARY_UPLOAD_PRESET in der .env-Datei.");
+      return;
+    }
+
+    setUploadingFiles(prev => ({ ...prev, [fieldName]: true }));
+    setErrorStatus(null);
+    try {
+      const urls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        const form = new FormData();
+        form.append('file', file);
+        form.append('upload_preset', uploadPreset);
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: 'POST',
+          body: form,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Cloudinary upload failed: ${errorText}`);
+        }
+
+        const data = await response.json();
+        const secureUrl = data.secure_url;
+        if (secureUrl) {
+          urls.push(secureUrl);
+        }
+      }
+
+      setFormData(prev => {
+        if (fieldName.startsWith('areaImages.')) {
+          const areaKey = fieldName.split('.')[1];
+          const existing = prev.areaImages?.[areaKey] || [];
+          const existingArray = Array.isArray(existing) ? existing : [existing].filter(Boolean);
+          return {
+            ...prev,
+            areaImages: {
+              ...prev.areaImages,
+              [areaKey]: [...existingArray, ...urls]
+            }
+          };
+        } else if (fieldName === 'images') {
+          return { ...prev, images: [...(prev.images || []), ...urls] };
+        } else if (fieldName === 'pdfLinks') {
+          return { ...prev, pdfLinks: [...(prev.pdfLinks || []), ...urls] };
+        }
+        return prev;
+      });
+    } catch (error: any) {
+      console.error("Cloudinary upload error:", error);
+      setErrorStatus(`Fehler beim Hochladen der Datei(en): ${error.message}`);
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [fieldName]: false }));
+      // Reset input
+      event.target.value = '';
+    }
+  };
 
   const fetchListings = async () => {
     // onSnapshot handles this automatically, but we keep this for the refresh button
@@ -406,7 +476,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase mb-1">Bilder hinzufügen (URLs)</label>
+                <label className="block text-xs font-bold uppercase mb-1">Bilder hinzufügen</label>
                 <div className="flex gap-2 mb-4">
                   <input 
                     type="text" 
@@ -414,12 +484,18 @@ export default function AdminDashboard() {
                     placeholder="Bild-URL eingeben..."
                     onChange={(e) => setNewImage(e.target.value)}
                     className="flex-grow p-3 rounded-lg border border-border-main" 
-                    disabled={submitting}
+                    disabled={submitting || uploadingFiles['images']}
                   />
-                  <button type="button" onClick={addImage} disabled={submitting} className="bg-black text-white px-4 rounded-lg">
+                  <button type="button" onClick={addImage} disabled={submitting || uploadingFiles['images']} className="bg-black text-white px-4 rounded-lg">
                     <ImageIcon size={18} />
                   </button>
+                  <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-black px-4 rounded-lg flex items-center justify-center transition-colors border border-gray-200">
+                    <Upload size={18} className="mr-2" />
+                    PC
+                    <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={(e) => handleCloudinaryUpload(e, 'images')} disabled={submitting || uploadingFiles['images']} />
+                  </label>
                 </div>
+                {uploadingFiles['images'] && <p className="text-sm text-gray-500 mb-2">Lade Dateien über Cloudinary hoch...</p>}
                 <div className="grid grid-cols-5 gap-2">
                   {formData.images?.map((img, i) => (
                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
@@ -439,7 +515,7 @@ export default function AdminDashboard() {
 
               {formData.type === 'sale' && (
                 <div>
-                  <label className="block text-xs font-bold uppercase mb-1">PDF Dokumente (z.B. Grundriss URLs)</label>
+                  <label className="block text-xs font-bold uppercase mb-1">PDF Dokumente (z.B. Grundriss)</label>
                   <div className="flex gap-2 mb-2">
                     <input 
                       type="text" 
@@ -447,10 +523,16 @@ export default function AdminDashboard() {
                       onChange={(e) => setNewPdfLink(e.target.value)}
                       placeholder="PDF-URL eingeben..."
                       className="flex-grow p-3 rounded-lg border border-border-main" 
-                      disabled={submitting}
+                      disabled={submitting || uploadingFiles['pdfLinks']}
                     />
-                    <button type="button" onClick={addPdfLink} disabled={submitting} className="bg-black text-white px-4 rounded-lg">Hinzufügen</button>
+                    <button type="button" onClick={addPdfLink} disabled={submitting || uploadingFiles['pdfLinks']} className="bg-black text-white px-4 rounded-lg">Hinzufügen</button>
+                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-black px-4 rounded-lg flex items-center justify-center transition-colors border border-gray-200">
+                      <Upload size={18} className="mr-2" />
+                      PC
+                      <input type="file" multiple accept="application/pdf" className="hidden" onChange={(e) => handleCloudinaryUpload(e, 'pdfLinks')} disabled={submitting || uploadingFiles['pdfLinks']} />
+                    </label>
                   </div>
+                  {uploadingFiles['pdfLinks'] && <p className="text-sm text-gray-500 mb-2">Lade PDF(s) über Cloudinary hoch...</p>}
                   <div className="flex flex-col gap-2">
                     {formData.pdfLinks?.map((link, i) => (
                       <div key={i} className="bg-gray-100 px-3 py-2 rounded-lg text-sm flex justify-between items-center break-all">
@@ -465,7 +547,7 @@ export default function AdminDashboard() {
               )}
 
               <div>
-                <label className="block text-xs font-bold uppercase mb-4">Raum/Bereich Fotos (URLs)</label>
+                <label className="block text-xs font-bold uppercase mb-4">Raum/Bereich Fotos</label>
                 <div className="space-y-4">
                   {Object.entries(AREA_LABELS).map(([key, label]) => {
                     const fieldKey = `areaImages.${key}`;
@@ -482,9 +564,15 @@ export default function AdminDashboard() {
                             })}
                             placeholder={`Bild-URLs für ${label} (mit Komma trennen)`}
                             className="flex-grow p-3 rounded-lg border border-border-main text-sm" 
-                            disabled={submitting}
+                            disabled={submitting || uploadingFiles[fieldKey]}
                           />
+                          <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-black px-4 py-3 rounded-lg flex items-center justify-center transition-colors border border-gray-200">
+                            <Upload size={18} className="mr-2" />
+                            PC
+                            <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={(e) => handleCloudinaryUpload(e, fieldKey)} disabled={submitting || uploadingFiles[fieldKey]} />
+                          </label>
                         </div>
+                        {uploadingFiles[fieldKey] && <p className="text-sm text-gray-500 max-w-full truncate pl-32">Lade Bilder über Cloudinary hoch...</p>}
                       </div>
                     );
                   })}
