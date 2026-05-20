@@ -4,6 +4,7 @@ import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTi
 import { Listing, RENTALS, SALES } from '@/src/constants';
 import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database } from 'lucide-react';
 
+
 const AREA_LABELS: Record<string, string> = {
   livingRoom: 'Wohnzimmer',
   kitchen: 'Küche',
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string>, pdfLinks: string[] }>>({
+  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string | string[]>, pdfLinks: string[] }>>({
     title: '',
     location: '',
     price: '',
@@ -410,7 +411,7 @@ export default function AdminDashboard() {
                   <input 
                     type="text" 
                     value={newImage}
-                    placeholder="https://unsplash..."
+                    placeholder="Bild-URL eingeben..."
                     onChange={(e) => setNewImage(e.target.value)}
                     className="flex-grow p-3 rounded-lg border border-border-main" 
                     disabled={submitting}
@@ -444,7 +445,7 @@ export default function AdminDashboard() {
                       type="text" 
                       value={newPdfLink}
                       onChange={(e) => setNewPdfLink(e.target.value)}
-                      placeholder="https://..."
+                      placeholder="PDF-URL eingeben..."
                       className="flex-grow p-3 rounded-lg border border-border-main" 
                       disabled={submitting}
                     />
@@ -466,22 +467,27 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-xs font-bold uppercase mb-4">Raum/Bereich Fotos (URLs)</label>
                 <div className="space-y-4">
-                  {Object.entries(AREA_LABELS).map(([key, label]) => (
-                    <div key={key} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                      <label className="w-32 text-sm font-semibold">{label}</label>
-                      <input 
-                        type="text" 
-                        value={formData.areaImages?.[key] || ''}
-                        onChange={(e) => setFormData({
-                          ...formData, 
-                          areaImages: { ...formData.areaImages, [key]: e.target.value }
-                        })}
-                        placeholder={`Bild-URL für ${label}`}
-                        className="flex-grow p-3 rounded-lg border border-border-main text-sm" 
-                        disabled={submitting}
-                      />
-                    </div>
-                  ))}
+                  {Object.entries(AREA_LABELS).map(([key, label]) => {
+                    const fieldKey = `areaImages.${key}`;
+                    return (
+                      <div key={key} className="flex flex-col gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                          <label className="w-32 text-sm font-semibold">{label}</label>
+                          <input 
+                            type="text" 
+                            value={Array.isArray(formData.areaImages?.[key]) ? (formData.areaImages[key] as string[]).join(', ') : (formData.areaImages?.[key] || '')}
+                            onChange={(e) => setFormData({
+                              ...formData, 
+                              areaImages: { ...formData.areaImages, [key]: e.target.value.split(/[\s,]+/).filter(Boolean) }
+                            })}
+                            placeholder={`Bild-URLs für ${label} (mit Komma trennen)`}
+                            className="flex-grow p-3 rounded-lg border border-border-main text-sm" 
+                            disabled={submitting}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -10,7 +10,7 @@ export interface Listing {
   description: string;
   type: 'rental' | 'sale';
   amenities?: string[];
-  areaImages?: Record<string, string>;
+  areaImages?: Record<string, string | string[]>;
   pdfLinks?: string[];
 }
 

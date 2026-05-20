@@ -290,23 +290,24 @@ export default function ListingDetail() {
               </p>
             </div>
 
-            {listing.areaImages && Object.values(listing.areaImages).filter(img => img).length > 0 && (
+            {listing.areaImages && Object.values(listing.areaImages).filter(img => img && (Array.isArray(img) ? img.length > 0 : true)).length > 0 && (
               <div className="py-8 border-b border-border-light">
                 <h3 className="text-xl font-bold mb-6">Räume & Bereiche</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {Object.entries(AREA_LABELS)
-                    .filter(([key]) => !!listing.areaImages?.[key])
-                    .map(([key, label]) => {
-                      const imgUrl = listing.areaImages[key];
-                      return (
-                        <div key={key} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(imgUrl)}>
+                    .filter(([key]) => !!listing.areaImages?.[key] && (Array.isArray(listing.areaImages?.[key]) ? (listing.areaImages[key] as string[]).length > 0 : true))
+                    .flatMap(([key, label]) => {
+                      const imgData = listing.areaImages[key];
+                      const imgs = Array.isArray(imgData) ? imgData : [imgData];
+                      return imgs.map((imgUrl, index) => (
+                        <div key={`${key}-${index}`} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(imgUrl)}>
                           <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative">
-                            <img src={imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={label} />
+                            <img src={imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={`${label} ${index + 1}`} />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                           </div>
-                          <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}</h4>
+                          <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}{imgs.length > 1 ? ` ${index + 1}` : ''}</h4>
                         </div>
-                      );
+                      ));
                     })}
                 </div>
               </div>

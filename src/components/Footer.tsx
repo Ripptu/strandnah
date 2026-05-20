@@ -26,7 +26,7 @@ export default function Footer() {
             <h4 className="text-sm font-bold uppercase tracking-widest text-[#c5a044] mb-6">Rechtliches</h4>
             <div className="flex flex-col gap-3 text-sm text-gray-400">
               <Link to="/impressum" className="hover:text-white transition-colors">Impressum</Link>
-              <Link to="/datenschutz" className="hover:text-white transition-colors">Datenschutz</Link>
+              <Link to="/datenschutz" className="hover:text-white transition-colors">Datenschutzerklärung</Link>
               <Link to="/agb" className="hover:text-white transition-colors">AGB</Link>
             </div>
           </div>
@@ -51,7 +51,7 @@ export default function Footer() {
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-gray-500 uppercase tracking-widest">
           <p>© {new Date().getFullYear()} alp Verwaltungs GmbH. Alle Rechte vorbehalten.</p>
           <div className="flex gap-8">
-            <Link to="/datenschutz" className="hover:text-white transition-colors">Datenschutz</Link>
+            <Link to="/datenschutz" className="hover:text-white transition-colors">Datenschutzerklärung</Link>
             <Link to="/impressum" className="hover:text-white transition-colors">Impressum</Link>
             <Link to="/agb" className="hover:text-white transition-colors">AGB</Link>
           </div>
