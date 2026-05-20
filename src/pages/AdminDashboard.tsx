@@ -3,6 +3,7 @@ import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch, onSnapshot } from 'firebase/firestore';
 import { Listing, RENTALS, SALES } from '@/src/constants';
 import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database, Upload } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 
 
 const AREA_LABELS: Record<string, string> = {
@@ -56,14 +57,30 @@ export default function AdminDashboard() {
     }
 
     setUploadingFiles(prev => ({ ...prev, [fieldName]: true }));
+    setUploadProgress(prev => ({ ...prev, [fieldName]: 0 }));
     setErrorStatus(null);
     try {
       const urls: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        let fileToUpload = files[i];
         
+        // Komprimiere Bilder, wenn es sich um ein Bild handelt
+        if (fileToUpload.type.startsWith('image/')) {
+          try {
+            const options = {
+              maxSizeMB: 9, // Knapp unter 10MB Grenze von Cloudinary Free
+              maxWidthOrHeight: 2560,
+              useWebWorker: true,
+            };
+            fileToUpload = await imageCompression(fileToUpload, options);
+          } catch (compressError) {
+            console.error('Fehler bei der Bildkomprimierung', compressError);
+            // Ignorieren und Original verwenden, falls Fehler auftritt
+          }
+        }
+
         const form = new FormData();
-        form.append('file', file);
+        form.append('file', fileToUpload);
         form.append('upload_preset', uploadPreset);
 
         const secureUrl = await new Promise<string>((resolve, reject) => {
