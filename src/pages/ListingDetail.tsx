@@ -290,23 +290,27 @@ export default function ListingDetail() {
               </p>
             </div>
 
-            <div className="py-8 border-b border-border-light">
-              <h3 className="text-xl font-bold mb-6">Räume & Bereiche</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {Object.entries(AREA_LABELS).map(([key, label]) => {
-                  const imgUrl = listing.areaImages?.[key] || FALLBACK_AREA_IMAGES[key] || `https://placehold.co/600x400/eeeeee/999999?text=${encodeURIComponent(label)}`;
-                  return (
-                    <div key={key} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(imgUrl)}>
-                      <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative">
-                         <img src={imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={label} />
-                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                      </div>
-                      <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}</h4>
-                    </div>
-                  );
-                })}
+            {listing.areaImages && Object.values(listing.areaImages).filter(img => img).length > 0 && (
+              <div className="py-8 border-b border-border-light">
+                <h3 className="text-xl font-bold mb-6">Räume & Bereiche</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {Object.entries(AREA_LABELS)
+                    .filter(([key]) => !!listing.areaImages?.[key])
+                    .map(([key, label]) => {
+                      const imgUrl = listing.areaImages[key];
+                      return (
+                        <div key={key} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(imgUrl)}>
+                          <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative">
+                            <img src={imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={label} />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                          </div>
+                          <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}</h4>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="py-8 border-b border-border-light">
               <h3 className="text-xl font-bold mb-6">Was bietet dir diese Unterkunft</h3>
@@ -352,67 +356,69 @@ export default function ListingDetail() {
                   </div>
                 </div>
 
-                <div className="border border-gray-300 rounded-xl overflow-visible mb-4 hover:border-airbnb-red transition-colors duration-300 relative">
-                  <div 
-                    className="grid grid-cols-2 border-b border-gray-300 cursor-pointer"
-                    onClick={() => setShowCalendar(!showCalendar)}
-                  >
-                    <div className="p-3 border-r border-gray-300 hover:bg-gray-50 transition-colors">
-                      <p className="text-[10px] font-bold uppercase text-gray-500">Check-in</p>
-                      <p className="text-sm font-medium">
-                        {selectedRange?.[0] ? selectedRange[0].toLocaleDateString('de-DE') : 'Datum wählen'}
-                      </p>
-                    </div>
-                    <div className="p-3 hover:bg-gray-50 transition-colors">
-                      <p className="text-[10px] font-bold uppercase text-gray-500">Check-out</p>
-                      <p className="text-sm font-medium">
-                        {selectedRange?.[1] ? selectedRange[1].toLocaleDateString('de-DE') : 'Datum wählen'}
-                      </p>
-                    </div>
-                  </div>
-                  {showCalendar && (
-                    <div className="absolute top-[80px] left-0 md:-left-[20px] w-full md:w-[400px] z-[100] bg-white rounded-2xl shadow-2xl">
-                      <BookingCalendar 
-                        listingId={listing.id} 
-                        icalUrl={listing.icalUrl} 
-                        onDateChange={(range) => {
-                          setSelectedRange(range);
-                          if (range && range[0] && range[1]) {
-                            setShowCalendar(false);
-                          }
-                        }} 
-                      />
-                      <div className="p-4 border-t border-gray-100 flex justify-end bg-white rounded-b-2xl">
-                        <button 
-                          onClick={() => setShowCalendar(false)} 
-                          className="bg-black text-white px-6 py-2 rounded-xl font-bold"
-                        >
-                          Fertig
-                        </button>
+                {listing.type === 'rental' && (
+                  <div className="border border-gray-300 rounded-xl overflow-visible mb-4 hover:border-airbnb-red transition-colors duration-300 relative">
+                    <div 
+                      className="grid grid-cols-2 border-b border-gray-300 cursor-pointer"
+                      onClick={() => setShowCalendar(!showCalendar)}
+                    >
+                      <div className="p-3 border-r border-gray-300 hover:bg-gray-50 transition-colors">
+                        <p className="text-[10px] font-bold uppercase text-gray-500">Check-in</p>
+                        <p className="text-sm font-medium">
+                          {selectedRange?.[0] ? selectedRange[0].toLocaleDateString('de-DE') : 'Datum wählen'}
+                        </p>
+                      </div>
+                      <div className="p-3 hover:bg-gray-50 transition-colors">
+                        <p className="text-[10px] font-bold uppercase text-gray-500">Check-out</p>
+                        <p className="text-sm font-medium">
+                          {selectedRange?.[1] ? selectedRange[1].toLocaleDateString('de-DE') : 'Datum wählen'}
+                        </p>
                       </div>
                     </div>
-                  )}
-                  <div className="p-3 relative group hover:bg-gray-50 transition-colors">
-                    <p className="text-[10px] font-bold uppercase text-airbnb-red">Personenanzahl</p>
-                    <div className="flex items-center">
-                      <select 
-                        value={guests} 
-                        onChange={(e) => setGuests(parseInt(e.target.value))}
-                        className="w-full text-base font-medium bg-transparent border-none p-0 focus:ring-0 cursor-pointer appearance-none pr-8"
-                      >
-                        {[1, 2, 3, 4].map(num => (
-                          <option key={num} value={num} className="text-black">
-                            {num} {num === 1 ? 'Gast' : 'Gäste'}
-                          </option>
-                        ))}
-                      </select>
-                      <Users 
-                        size={18} 
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-airbnb-red opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" 
-                      />
+                    {showCalendar && (
+                      <div className="absolute top-[80px] left-0 md:-left-[20px] w-full md:w-[400px] z-[100] bg-white rounded-2xl shadow-2xl">
+                        <BookingCalendar 
+                          listingId={listing.id} 
+                          icalUrl={listing.icalUrl} 
+                          onDateChange={(range) => {
+                            setSelectedRange(range);
+                            if (range && range[0] && range[1]) {
+                              setShowCalendar(false);
+                            }
+                          }} 
+                        />
+                        <div className="p-4 border-t border-gray-100 flex justify-end bg-white rounded-b-2xl">
+                          <button 
+                            onClick={() => setShowCalendar(false)} 
+                            className="bg-black text-white px-6 py-2 rounded-xl font-bold"
+                          >
+                            Fertig
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-3 relative group hover:bg-gray-50 transition-colors">
+                      <p className="text-[10px] font-bold uppercase text-airbnb-red">Personenanzahl</p>
+                      <div className="flex items-center">
+                        <select 
+                          value={guests} 
+                          onChange={(e) => setGuests(parseInt(e.target.value))}
+                          className="w-full text-base font-medium bg-transparent border-none p-0 focus:ring-0 cursor-pointer appearance-none pr-8"
+                        >
+                          {[1, 2, 3, 4].map(num => (
+                            <option key={num} value={num} className="text-black">
+                              {num} {num === 1 ? 'Gast' : 'Gäste'}
+                            </option>
+                          ))}
+                        </select>
+                        <Users 
+                          size={18} 
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-airbnb-red opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" 
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 <form onSubmit={handleReserve}>
                   <div className="space-y-4 mb-6 mt-4">
