@@ -41,13 +41,14 @@ export default function AdminDashboard() {
   const [newAmenity, setNewAmenity] = useState('');
   const [newPdfLink, setNewPdfLink] = useState('');
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
   const handleCloudinaryUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dvwijhs3c';
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'Strandnah';
 
     if (!cloudName || !uploadPreset) {
       setErrorStatus("Cloudinary Upload ist nicht konfiguriert. Bitte setzen Sie VITE_CLOUDINARY_CLOUD_NAME und VITE_CLOUDINARY_UPLOAD_PRESET in der .env-Datei.");
@@ -65,18 +66,32 @@ export default function AdminDashboard() {
         form.append('file', file);
         form.append('upload_preset', uploadPreset);
 
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-          method: 'POST',
-          body: form,
+        const secureUrl = await new Promise<string>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`);
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percentage = Math.round((e.loaded / e.total) * 100);
+              // Account for multiple files by normalizing the percentage
+              const overallPercentage = Math.round(((i * 100) + percentage) / files.length);
+              setUploadProgress(prev => ({ ...prev, [fieldName]: overallPercentage }));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const data = JSON.parse(xhr.responseText);
+              resolve(data.secure_url);
+            } else {
+              reject(new Error(`Cloudinary upload failed: ${xhr.responseText}`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.send(form);
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Cloudinary upload failed: ${errorText}`);
-        }
-
-        const data = await response.json();
-        const secureUrl = data.secure_url;
         if (secureUrl) {
           urls.push(secureUrl);
         }
@@ -106,6 +121,7 @@ export default function AdminDashboard() {
       setErrorStatus(`Fehler beim Hochladen der Datei(en): ${error.message}`);
     } finally {
       setUploadingFiles(prev => ({ ...prev, [fieldName]: false }));
+      setUploadProgress(prev => ({ ...prev, [fieldName]: 0 }));
       // Reset input
       event.target.value = '';
     }
@@ -495,7 +511,14 @@ export default function AdminDashboard() {
                     <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={(e) => handleCloudinaryUpload(e, 'images')} disabled={submitting || uploadingFiles['images']} />
                   </label>
                 </div>
-                {uploadingFiles['images'] && <p className="text-sm text-gray-500 mb-2">Lade Dateien über Cloudinary hoch...</p>}
+                {uploadingFiles['images'] && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-500 mb-1">Lade Dateien hoch... {uploadProgress['images'] || 0}%</p>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-black h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress['images'] || 0}%` }}></div>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-5 gap-2">
                   {formData.images?.map((img, i) => (
                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
@@ -532,7 +555,14 @@ export default function AdminDashboard() {
                       <input type="file" multiple accept="application/pdf" className="hidden" onChange={(e) => handleCloudinaryUpload(e, 'pdfLinks')} disabled={submitting || uploadingFiles['pdfLinks']} />
                     </label>
                   </div>
-                  {uploadingFiles['pdfLinks'] && <p className="text-sm text-gray-500 mb-2">Lade PDF(s) über Cloudinary hoch...</p>}
+                  {uploadingFiles['pdfLinks'] && (
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500 mb-1">Lade PDF(s) hoch... {uploadProgress['pdfLinks'] || 0}%</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-black h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress['pdfLinks'] || 0}%` }}></div>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     {formData.pdfLinks?.map((link, i) => (
                       <div key={i} className="bg-gray-100 px-3 py-2 rounded-lg text-sm flex justify-between items-center break-all">
@@ -572,7 +602,14 @@ export default function AdminDashboard() {
                             <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={(e) => handleCloudinaryUpload(e, fieldKey)} disabled={submitting || uploadingFiles[fieldKey]} />
                           </label>
                         </div>
-                        {uploadingFiles[fieldKey] && <p className="text-sm text-gray-500 max-w-full truncate pl-32">Lade Bilder über Cloudinary hoch...</p>}
+                        {uploadingFiles[fieldKey] && (
+                          <div className="pl-32 mt-1">
+                            <p className="text-sm text-gray-500 mb-1">Lade Bilder hoch... {uploadProgress[fieldKey] || 0}%</p>
+                            <div className="w-full max-w-xs bg-gray-200 rounded-full h-1.5">
+                              <div className="bg-black h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress[fieldKey] || 0}%` }}></div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
