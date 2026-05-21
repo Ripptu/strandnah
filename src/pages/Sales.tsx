@@ -5,23 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '@/src/lib/firebase';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
-const TeaserCard = ({ title, imgUrl }: { title: string, imgUrl: string }) => (
-  <div className="group cursor-default relative">
-    <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-4 bg-gray-200 shadow-sm relative">
-      <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[2px]">
-        <div className="bg-white/20 backdrop-blur-md border border-white/40 text-white px-6 py-2 rounded-full font-bold tracking-widest uppercase text-sm">
-          Demnächst
-        </div>
-      </div>
-      <img src={imgUrl} className="w-full h-full object-cover grayscale" alt="Teaser" />
-    </div>
-    <div className="mt-2">
-      <h3 className="font-bold text-[15px] leading-tight text-gray-500 mb-1">{title}</h3>
-      <p className="text-gray-400 text-sm">Usedom</p>
-    </div>
-  </div>
-);
-
 export default function Sales() {
   const navigate = useNavigate();
   const [items, setItems] = useState<any[]>([]);
@@ -39,7 +22,7 @@ export default function Sales() {
         if (data.length === 0) {
           data = SALES;
         }
-        setItems(data.filter((d: any) => d.isActive !== false));
+        setItems(data);
       } catch (error) {
         console.error("Error fetching sales:", error);
       } finally {
@@ -70,8 +53,6 @@ export default function Sales() {
                 onClick={() => { navigate(`/eigentumswohnungen/${listing.id}`); }}
               />
             ))}
-            {/* Fixed Teaser #3 for Sales */}
-            <TeaserCard title="Premium Penthouse Projekt" imgUrl="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80" />
           </div>
         )}
 

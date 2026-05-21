@@ -221,7 +221,8 @@ export default function AdminDashboard() {
         amenities: [],
         areaImages: {},
         pdfLinks: [],
-        icalUrl: ''
+        icalUrl: '',
+        isActive: true
       });
     } catch (error) {
       console.error("Save error:", error);
@@ -246,6 +247,7 @@ export default function AdminDashboard() {
       areaImages: listing.areaImages || {},
       pdfLinks: listing.pdfLinks || [],
       icalUrl: listing.icalUrl || '',
+      isActive: listing.isActive !== false,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -794,7 +796,7 @@ export default function AdminDashboard() {
                     type="button" 
                     onClick={() => {
                       setEditingId(null);
-                      setFormData({ title: '', location: '', price: '', description: '', type: 'rental', images: [], features: [], amenities: [], areaImages: {}, pdfLinks: [] });
+                      setFormData({ title: '', location: '', price: '', description: '', type: 'rental', images: [], features: [], amenities: [], areaImages: {}, pdfLinks: [], isActive: true });
                     }}
                     className="w-full bg-gray-100 py-3 rounded-xl font-bold"
                     disabled={submitting}
