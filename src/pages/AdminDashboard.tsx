@@ -319,6 +319,39 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number, listType: string, areaKey?: string) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ index, listType, areaKey }));
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number, listType: string, areaKey?: string) => {
+    e.preventDefault();
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if (data.listType !== listType || data.areaKey !== areaKey || data.index === targetIndex) return;
+
+      if (listType === 'images' && formData.images) {
+        const updated = [...formData.images];
+        const [draggedItem] = updated.splice(data.index, 1);
+        updated.splice(targetIndex, 0, draggedItem);
+        setFormData({ ...formData, images: updated });
+      }
+
+      if (listType === 'areaImages' && areaKey && formData.areaImages && formData.areaImages[areaKey]) {
+        const areaImagesArray = Array.isArray(formData.areaImages[areaKey]) ? formData.areaImages[areaKey] as string[] : [formData.areaImages[areaKey] as string].filter(Boolean);
+        const updated = [...areaImagesArray];
+        const [draggedItem] = updated.splice(data.index, 1);
+        updated.splice(targetIndex, 0, draggedItem);
+        setFormData({ ...formData, areaImages: { ...formData.areaImages, [areaKey]: updated } });
+      }
+    } catch (err) {
+      // Ignore invalid drag data
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
+
   const addFeature = () => {
     if (newFeature && formData.features) {
       setFormData({ ...formData, features: [...formData.features, newFeature] });
@@ -571,35 +604,42 @@ export default function AdminDashboard() {
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                   {formData.images?.map((img, i) => (
-                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
-                      <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                        <div className="flex justify-between">
+                     <div 
+                       key={i} 
+                       className="relative aspect-square rounded-lg overflow-hidden group border-2 border-transparent hover:border-gray-200 cursor-move"
+                       draggable={!submitting}
+                       onDragStart={(e) => handleDragStart(e, i, 'images')}
+                       onDrop={(e) => handleDrop(e, i, 'images')}
+                       onDragOver={handleDragOver}
+                     >
+                      <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-cover pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 flex flex-col justify-between p-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-between pointer-events-auto">
                           <button 
                             type="button" 
                             onClick={() => moveImage(i, 'left')} 
                             disabled={i === 0 || submitting}
-                            className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                            className="bg-white/90 p-2 lg:p-1.5 rounded-md hover:bg-white disabled:opacity-0 transition-opacity"
                           >
-                            <ArrowLeft size={14} className="text-black" />
+                            <ArrowLeft size={16} className="text-black" />
                           </button>
                           <button 
                             type="button" 
                             onClick={() => moveImage(i, 'right')} 
                             disabled={i === formData.images!.length - 1 || submitting}
-                            className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                            className="bg-white/90 p-2 lg:p-1.5 rounded-md hover:bg-white disabled:opacity-0 transition-opacity"
                           >
-                            <ArrowRight size={14} className="text-black" />
+                            <ArrowRight size={16} className="text-black" />
                           </button>
                         </div>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center pointer-events-auto pb-1">
                           <button 
                             type="button"
                             onClick={() => removeImage(i)}
-                            className="bg-white/80 p-1.5 rounded-md hover:bg-white text-red-600 disabled:opacity-50"
+                            className="bg-white/90 p-2 lg:p-1.5 rounded-md hover:bg-white text-red-600 disabled:opacity-50"
                             disabled={submitting}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </div>
@@ -690,35 +730,42 @@ export default function AdminDashboard() {
                           <div className="pl-0 sm:pl-44 mt-2">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                               {currentImages.map((img, i) => (
-                                <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
-                                  <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                                    <div className="flex justify-between">
+                                <div 
+                                  key={i} 
+                                  className="relative aspect-square rounded-lg overflow-hidden group border-2 border-transparent hover:border-gray-200 cursor-move"
+                                  draggable={!submitting}
+                                  onDragStart={(e) => handleDragStart(e, i, 'areaImages', key)}
+                                  onDrop={(e) => handleDrop(e, i, 'areaImages', key)}
+                                  onDragOver={handleDragOver}
+                                >
+                                  <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-cover pointer-events-none" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 flex flex-col justify-between p-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                    <div className="flex justify-between pointer-events-auto">
                                       <button 
                                         type="button" 
                                         onClick={() => moveAreaImage(key, i, 'left')} 
                                         disabled={i === 0 || submitting}
-                                        className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                                        className="bg-white/90 p-2 lg:p-1.5 rounded-md hover:bg-white disabled:opacity-0 transition-opacity"
                                       >
-                                        <ArrowLeft size={14} className="text-black" />
+                                        <ArrowLeft size={16} className="text-black" />
                                       </button>
                                       <button 
                                         type="button" 
                                         onClick={() => moveAreaImage(key, i, 'right')} 
                                         disabled={i === currentImages.length - 1 || submitting}
-                                        className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                                        className="bg-white/90 p-2 lg:p-1.5 rounded-md hover:bg-white disabled:opacity-0 transition-opacity"
                                       >
-                                        <ArrowRight size={14} className="text-black" />
+                                        <ArrowRight size={16} className="text-black" />
                                       </button>
                                     </div>
-                                    <div className="flex justify-center">
+                                    <div className="flex justify-center pointer-events-auto pb-1">
                                       <button 
                                         type="button"
                                         onClick={() => removeAreaImage(key, i)}
-                                        className="bg-white/80 p-1.5 rounded-md hover:bg-white text-red-600 disabled:opacity-50"
+                                        className="bg-white/90 p-2 lg:p-1.5 rounded-md hover:bg-white text-red-600 disabled:opacity-50"
                                         disabled={submitting}
                                       >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={18} />
                                       </button>
                                     </div>
                                   </div>
