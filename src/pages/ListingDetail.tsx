@@ -292,18 +292,19 @@ export default function ListingDetail() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {Object.entries(AREA_LABELS)
                     .filter(([key]) => !!listing.areaImages?.[key] && (Array.isArray(listing.areaImages?.[key]) ? (listing.areaImages[key] as string[]).length > 0 : true))
-                    .flatMap(([key, label]) => {
+                    .map(([key, label]) => {
                       const imgData = listing.areaImages[key];
                       const imgs = Array.isArray(imgData) ? imgData : [imgData];
-                      return imgs.map((imgUrl, index) => (
-                        <div key={`${key}-${index}`} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(imgUrl)}>
-                          <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative">
-                            <img src={imgUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={`${label} ${index + 1}`} />
+                      const mainImg = imgs[0];
+                      return (
+                        <div key={key} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(mainImg)}>
+                          <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative bg-gray-50">
+                            <img src={mainImg} loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={label} />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                           </div>
-                          <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}{imgs.length > 1 ? ` ${index + 1}` : ''}</h4>
+                          <h4 className="font-medium text-sm text-text-primary group-hover:text-airbnb-red transition-colors">{label}</h4>
                         </div>
-                      ));
+                      );
                     })}
                 </div>
               </div>

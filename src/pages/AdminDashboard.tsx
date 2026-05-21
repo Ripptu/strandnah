@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch, onSnapshot } from 'firebase/firestore';
 import { Listing, RENTALS, SALES, AREA_LABELS } from '@/src/constants';
-import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database, Upload } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database, Upload, ArrowLeft, ArrowRight } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 
 export default function AdminDashboard() {
@@ -285,6 +285,40 @@ export default function AdminDashboard() {
     }
   };
 
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    if (formData.images) {
+      const updated = [...formData.images];
+      if (direction === 'left' && index > 0) {
+        [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+      } else if (direction === 'right' && index < updated.length - 1) {
+        [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+      }
+      setFormData({ ...formData, images: updated });
+    }
+  };
+
+  const removeAreaImage = (areaKey: string, index: number) => {
+    if (formData.areaImages && formData.areaImages[areaKey]) {
+      const areaImagesArray = Array.isArray(formData.areaImages[areaKey]) ? formData.areaImages[areaKey] as string[] : [formData.areaImages[areaKey] as string].filter(Boolean);
+      const updated = [...areaImagesArray];
+      updated.splice(index, 1);
+      setFormData({ ...formData, areaImages: { ...formData.areaImages, [areaKey]: updated } });
+    }
+  };
+
+  const moveAreaImage = (areaKey: string, index: number, direction: 'left' | 'right') => {
+    if (formData.areaImages && formData.areaImages[areaKey]) {
+      const areaImagesArray = Array.isArray(formData.areaImages[areaKey]) ? formData.areaImages[areaKey] as string[] : [formData.areaImages[areaKey] as string].filter(Boolean);
+      const updated = [...areaImagesArray];
+      if (direction === 'left' && index > 0) {
+        [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+      } else if (direction === 'right' && index < updated.length - 1) {
+        [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+      }
+      setFormData({ ...formData, areaImages: { ...formData.areaImages, [areaKey]: updated } });
+    }
+  };
+
   const addFeature = () => {
     if (newFeature && formData.features) {
       setFormData({ ...formData, features: [...formData.features, newFeature] });
@@ -535,18 +569,40 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                   {formData.images?.map((img, i) => (
-                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
+                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
                       <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                      <button 
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        disabled={submitting}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                        <div className="flex justify-between">
+                          <button 
+                            type="button" 
+                            onClick={() => moveImage(i, 'left')} 
+                            disabled={i === 0 || submitting}
+                            className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                          >
+                            <ArrowLeft size={14} className="text-black" />
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => moveImage(i, 'right')} 
+                            disabled={i === formData.images!.length - 1 || submitting}
+                            className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                          >
+                            <ArrowRight size={14} className="text-black" />
+                          </button>
+                        </div>
+                        <div className="flex justify-center">
+                          <button 
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="bg-white/80 p-1.5 rounded-md hover:bg-white text-red-600 disabled:opacity-50"
+                            disabled={submitting}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -597,32 +653,77 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {Object.entries(AREA_LABELS).map(([key, label]) => {
                     const fieldKey = `areaImages.${key}`;
+                    const currentImages = Array.isArray(formData.areaImages?.[key]) ? (formData.areaImages[key] as string[]) : [formData.areaImages?.[key] as string].filter(Boolean);
+                    
                     return (
-                      <div key={key} className="flex flex-col gap-2">
+                      <div key={key} className="flex flex-col gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-                          <label className="w-32 text-sm font-semibold">{label}</label>
+                          <label className="w-40 text-sm font-semibold">{label}</label>
                           <input 
                             type="text" 
-                            value={Array.isArray(formData.areaImages?.[key]) ? (formData.areaImages[key] as string[]).join(', ') : (formData.areaImages?.[key] || '')}
+                            value={currentImages.join(', ')}
                             onChange={(e) => setFormData({
                               ...formData, 
                               areaImages: { ...formData.areaImages, [key]: e.target.value.split(/[\s,]+/).filter(Boolean) }
                             })}
                             placeholder={`Bild-URLs für ${label} (mit Komma trennen)`}
-                            className="flex-grow p-3 rounded-lg border border-border-main text-sm" 
+                            className="flex-grow p-3 rounded-lg border border-border-main text-sm bg-white" 
                             disabled={submitting || uploadingFiles[fieldKey]}
                           />
-                          <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-black px-4 py-3 rounded-lg flex items-center justify-center transition-colors border border-gray-200">
+                          <label className="cursor-pointer bg-white hover:bg-gray-100 text-black px-4 py-3 rounded-lg flex items-center justify-center transition-colors border border-gray-200">
                             <Upload size={18} className="mr-2" />
                             PC
                             <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={(e) => handleCloudinaryUpload(e, fieldKey)} disabled={submitting || uploadingFiles[fieldKey]} />
                           </label>
                         </div>
                         {uploadingFiles[fieldKey] && (
-                          <div className="pl-32 mt-1">
+                          <div className="pl-0 sm:pl-44 mt-1">
                             <p className="text-sm text-gray-500 mb-1">Lade Bilder hoch... {uploadProgress[fieldKey] || 0}%</p>
                             <div className="w-full max-w-xs bg-gray-200 rounded-full h-1.5">
                               <div className="bg-black h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress[fieldKey] || 0}%` }}></div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Display Area Images */}
+                        {currentImages.length > 0 && (
+                          <div className="pl-0 sm:pl-44 mt-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                              {currentImages.map((img, i) => (
+                                <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
+                                  <img src={img} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                                    <div className="flex justify-between">
+                                      <button 
+                                        type="button" 
+                                        onClick={() => moveAreaImage(key, i, 'left')} 
+                                        disabled={i === 0 || submitting}
+                                        className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                                      >
+                                        <ArrowLeft size={14} className="text-black" />
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        onClick={() => moveAreaImage(key, i, 'right')} 
+                                        disabled={i === currentImages.length - 1 || submitting}
+                                        className="bg-white/80 p-1.5 rounded-md hover:bg-white disabled:opacity-50"
+                                      >
+                                        <ArrowRight size={14} className="text-black" />
+                                      </button>
+                                    </div>
+                                    <div className="flex justify-center">
+                                      <button 
+                                        type="button"
+                                        onClick={() => removeAreaImage(key, i)}
+                                        className="bg-white/80 p-1.5 rounded-md hover:bg-white text-red-600 disabled:opacity-50"
+                                        disabled={submitting}
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
