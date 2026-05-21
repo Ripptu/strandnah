@@ -2,16 +2,58 @@ import React, { useState } from 'react';
 import { X, Grid } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { AREA_LABELS, optimizeCloudinaryUrl } from '@/src/constants';
 
 interface Props {
-  images: string[];
+  listing: any;
 }
 
-export default function ImageGallery({ images }: Props) {
+export default function ImageGallery({ listing }: Props) {
   const [showLightbox, setShowLightbox] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('all');
+
+  const mainImages = listing.images || [];
+  const areaImages = listing.areaImages || {};
+
+  // For the grid view, we want up to 5 images. We can mix mainImages and some areaImages if mainImages < 5
+  let gridImages = [...mainImages];
+  if (gridImages.length < 5) {
+    Object.values(areaImages).forEach((val: any) => {
+      const arr = Array.isArray(val) ? val : [val];
+      gridImages.push(...arr);
+    });
+  }
+  // Ensure we have 5 valid strings, otherwise duplicate or use placeholder
+  gridImages = gridImages.slice(0, 5).filter(Boolean);
+  while (gridImages.length < 5 && gridImages.length > 0) {
+    gridImages.push(gridImages[0]);
+  }
+  if (gridImages.length === 0) {
+    gridImages = Array(5).fill('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80');
+  }
+
+  // Build lightbox tabs content
+  const tabs = [{ id: 'all', label: `Alle Fotos` }];
+  const allLightboxImages: string[] = [...mainImages];
+  
+  Object.entries(areaImages).forEach(([key, val]) => {
+    const arr = Array.isArray(val) ? val : [val];
+    if (arr.some(Boolean)) {
+       tabs.push({ id: key, label: AREA_LABELS[key] || key });
+       arr.forEach((v: string) => v && !allLightboxImages.includes(v) && allLightboxImages.push(v));
+    }
+  });
+
+  let displayImages = allLightboxImages;
+  if (activeTab !== 'all') {
+    const val = areaImages[activeTab];
+    displayImages = Array.isArray(val) ? val : [val];
+    displayImages = displayImages.filter(Boolean);
+  }
 
   const openLightbox = () => {
     setShowLightbox(true);
+    setActiveTab('all');
     document.body.style.overflow = 'hidden';
   };
 
@@ -27,7 +69,7 @@ export default function ImageGallery({ images }: Props) {
         <div className="grid grid-cols-4 grid-rows-2 gap-2 w-full h-full">
           <div className="col-span-2 row-span-2 relative overflow-hidden bg-gray-50">
             <img 
-              src={images[0]} 
+              src={optimizeCloudinaryUrl(gridImages[0], 1200)} 
               referrerPolicy="no-referrer" 
               className="w-full h-full object-cover cursor-pointer transition-opacity hover:opacity-90" 
               alt="Main gallery" 
@@ -36,7 +78,7 @@ export default function ImageGallery({ images }: Props) {
           </div>
           <div className="col-span-1 row-span-1 relative overflow-hidden bg-gray-50">
             <img 
-              src={images[1]} 
+              src={optimizeCloudinaryUrl(gridImages[1], 800)} 
               referrerPolicy="no-referrer" 
               className="w-full h-full object-cover cursor-pointer transition-opacity hover:opacity-90" 
               alt="Gallery 2" 
@@ -45,7 +87,7 @@ export default function ImageGallery({ images }: Props) {
           </div>
           <div className="col-span-1 row-span-1 relative overflow-hidden bg-gray-50">
             <img 
-              src={images[2]} 
+              src={optimizeCloudinaryUrl(gridImages[2], 800)} 
               referrerPolicy="no-referrer" 
               className="w-full h-full object-cover cursor-pointer transition-opacity hover:opacity-90" 
               alt="Gallery 3" 
@@ -54,7 +96,7 @@ export default function ImageGallery({ images }: Props) {
           </div>
           <div className="col-span-1 row-span-1 relative overflow-hidden bg-gray-50">
             <img 
-              src={images[3]} 
+              src={optimizeCloudinaryUrl(gridImages[3], 800)} 
               referrerPolicy="no-referrer" 
               className="w-full h-full object-cover cursor-pointer transition-opacity hover:opacity-90" 
               alt="Gallery 4" 
@@ -63,7 +105,7 @@ export default function ImageGallery({ images }: Props) {
           </div>
           <div className="col-span-1 row-span-1 relative overflow-hidden bg-gray-50">
             <img 
-              src={images[4]} 
+              src={optimizeCloudinaryUrl(gridImages[4], 800)} 
               referrerPolicy="no-referrer" 
               className="w-full h-full object-cover cursor-pointer transition-opacity hover:opacity-90" 
               alt="Gallery 5" 
@@ -91,7 +133,7 @@ export default function ImageGallery({ images }: Props) {
             className="fixed inset-0 z-[100] bg-white flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100">
               <button 
                 onClick={closeLightbox}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -99,26 +141,60 @@ export default function ImageGallery({ images }: Props) {
               >
                 <X size={24} />
               </button>
-              <div className="text-sm font-semibold uppercase tracking-widest text-gray-400">
-                Alle Bilder ({images.length})
+              
+              {/* Desktop Tabs */}
+              <div className="hidden md:flex items-center gap-2 overflow-x-auto no-scrollbar">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap",
+                      activeTab === tab.id 
+                        ? "bg-black text-white" 
+                        : "bg-gray-100 text-text-primary hover:bg-gray-200"
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
-              <div className="w-10" /> {/* Spacer */}
+              <div className="w-10 md:hidden" /> {/* Spacer for mobile */}
+            </div>
+
+            {/* Mobile Tabs */}
+            <div className="md:hidden flex items-center gap-2 overflow-x-auto no-scrollbar px-4 py-3 border-b border-gray-100">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap",
+                    activeTab === tab.id 
+                      ? "bg-black text-white" 
+                      : "bg-gray-100 text-text-primary hover:bg-gray-200"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             {/* Scrollable Gallery Content */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-10 py-10 no-scrollbar">
+            <div className="flex-1 overflow-y-auto px-4 md:px-10 py-6 md:py-10 no-scrollbar">
               <div className="max-w-7xl mx-auto">
                 <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                  {images.map((img, idx) => (
+                  {displayImages.map((img, idx) => (
                     <motion.div
-                      key={idx}
+                      key={img + idx}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
+                      transition={{ delay: (idx % 10) * 0.05 }}
                       className="break-inside-avoid"
                     >
                       <img
-                        src={img}
+                        src={optimizeCloudinaryUrl(img, 1200)}
+                        loading="lazy"
                         className="w-full rounded-2xl shadow-sm border border-black/5 object-cover hover:opacity-90 transition-opacity cursor-auto"
                         referrerPolicy="no-referrer"
                         alt={`Galerie Bild ${idx + 1}`}

@@ -1,29 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch, onSnapshot } from 'firebase/firestore';
-import { Listing, RENTALS, SALES } from '@/src/constants';
+import { Listing, RENTALS, SALES, AREA_LABELS } from '@/src/constants';
 import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database, Upload } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
-
-
-const AREA_LABELS: Record<string, string> = {
-  livingRoom: 'Wohnzimmer',
-  kitchen: 'Küche',
-  dining: 'Essbereich',
-  bedroom1: 'Schlafzimmer 1',
-  bedroom2: 'Schlafzimmer 2',
-  bedroom3: 'Schlafzimmer 3',
-  bathroom: 'Badezimmer',
-  guestWc: 'Gäste WC',
-  outdoor: 'Aussenbereich'
-};
 
 export default function AdminDashboard() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string | string[]>, pdfLinks: string[] }>>({
+  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string | string[]>, pdfLinks: string[], icalUrl: string, isActive: boolean }>>({
     title: '',
     location: '',
     price: '',
@@ -34,7 +21,8 @@ export default function AdminDashboard() {
     amenities: [],
     areaImages: {},
     pdfLinks: [],
-    icalUrl: ''
+    icalUrl: '',
+    isActive: true
   });
 
   const [newImage, setNewImage] = useState('');
@@ -438,6 +426,17 @@ export default function AdminDashboard() {
                     <option value="sale">Eigentumswohnung</option>
                   </select>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="isActive"
+                  checked={formData.isActive !== false} 
+                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                />
+                <label htmlFor="isActive" className="text-sm font-semibold cursor-pointer">
+                  Aktiv (Sichtbar auf Webseite)
+                </label>
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase mb-1">Beschreibung</label>

@@ -35,8 +35,11 @@ export default function Sales() {
           where('type', '==', 'sale')
         );
         const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        setItems(data);
+        let data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        if (data.length === 0) {
+          data = SALES;
+        }
+        setItems(data.filter((d: any) => d.isActive !== false));
       } catch (error) {
         console.error("Error fetching sales:", error);
       } finally {

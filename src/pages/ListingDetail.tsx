@@ -172,20 +172,16 @@ export default function ListingDetail() {
 
       setShowSuccess(true);
       setTimeout(() => {
-        const customerDetails = `\n\nMeine Kontaktdaten:\nName: ${formData.firstName} ${formData.lastName}\nE-Mail: ${formData.email}\nTelefon: ${formData.phone}\nAdresse: ${formData.street}, ${formData.zip} ${formData.city}\nBemerkung: ${formData.remarks || '-'}`;
+        const customerDetails = `\nName: ${formData.firstName} ${formData.lastName}\nE-Mail: ${formData.email}\nTelefon: ${formData.phone}\nAdresse: ${formData.street}, ${formData.zip} ${formData.city}\nBemerkung: ${formData.remarks || '-'}`;
         
-        let subject = '';
-        let body = '';
-
         if (listing.type === 'rental' && selectedRange) {
-          subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
-          body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nEndreinigung: ${cleaningFee} €\nWäschepaket: ${linenFee} €\nKurtaxe: ${kurtaxe} €\nGesamt: ${total} €${customerDetails}\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+          const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
+          const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nEndreinigung: ${cleaningFee} €\nWäschepaket: ${linenFee} €\nKurtaxe: ${kurtaxe} €\nGesamt: ${total} €\n\nMeine Kontaktdaten:${customerDetails}\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
+          window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
         } else {
-          subject = encodeURIComponent(`Objektanfrage (Kauf): ${listing.title}`);
-          body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich interessiere mich für das Objekt "${listing.title}". Bitte senden Sie mir weitere Informationen oder ein Exposé zu.${customerDetails}\n\nMit freundlichen Grüßen`);
+          const text = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich interessiere mich für das Objekt "${listing.title}". Bitte senden Sie mir weitere Informationen oder ein Exposé zu.\n\nMeine Kontaktdaten:${customerDetails}\n\nMit freundlichen Grüßen`);
+          window.open(`https://wa.me/4915565224488?text=${text}`, '_blank');
         }
-        
-        window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
       }, 2000);
     } catch (err: any) {
       console.error("Error creating booking:", err);
@@ -247,7 +243,7 @@ export default function ListingDetail() {
           </div>
         </header>
 
-        <ImageGallery images={listing.images} />
+        <ImageGallery listing={listing} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 mt-12">
           {/* Main Info */}
@@ -465,15 +461,18 @@ export default function ListingDetail() {
                   )}
                 </form>
 
-                <a 
-                  href={`https://wa.me/4915565224488?text=${encodeURIComponent(`Hallo, ich interessiere mich für das Objekt: ${listing.title} in ${listing.location}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full border border-black text-black py-3 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors mb-4 flex items-center justify-center gap-2"
-                >
-                  <MessageCircle size={20} className="text-green-600" />
-                  WhatsApp Anfrage
-                </a>
+                {listing.type === 'sale' && (
+                  <a 
+                    href={`https://wa.me/4915565224488?text=${encodeURIComponent(`Hallo, ich interessiere mich für das Objekt: ${listing.title} in ${listing.location}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full border border-black text-black py-3 rounded-xl font-bold text-lg hover:bg-gray-50 transition-colors mb-4 flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle size={20} className="text-[#25D366]" />
+                    WhatsApp Anfrage
+                  </a>
+                )}
+                
                 <p className="text-center text-sm text-text-secondary mb-4">Dir wird noch nichts berechnet</p>
                 
                 {listing.type === 'rental' && selectedRange && booking && (

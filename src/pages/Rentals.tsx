@@ -35,9 +35,11 @@ export default function Rentals() {
           where('type', '==', 'rental')
         );
         const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-        // If DB is empty, use static data for now (helpful for initial preview)
-        setItems(data);
+        let data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        if (data.length === 0) {
+          data = RENTALS;
+        }
+        setItems(data.filter((d: any) => d.isActive !== false));
       } catch (error) {
         console.error("Error fetching rentals:", error);
       } finally {
