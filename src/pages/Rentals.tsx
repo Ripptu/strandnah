@@ -59,12 +59,12 @@ export default function Rentals() {
         <div className="mt-20 p-12 bg-gray-50 rounded-2xl text-center">
           <h2 className="text-2xl font-bold mb-4">Nichts passendes gefunden?</h2>
           <p className="text-text-secondary mb-8">Kontaktieren Sie uns direkt, wir helfen Ihnen gerne persönlich weiter.</p>
-          <button 
-            onClick={() => window.location.href = 'mailto:info@strandnah-usedom.de?subject=Allgemeine Anfrage zu Ferienwohnungen'}
-            className="bg-black text-white px-8 py-3 rounded-xl font-bold"
+          <a 
+            href="mailto:info@strandnah-usedom.de?subject=Allgemeine Anfrage zu Ferienwohnungen"
+            className="inline-block bg-black text-white px-8 py-3 rounded-xl font-bold"
           >
             Anfrage senden
-          </button>
+          </a>
         </div>
       </div>
     </div>

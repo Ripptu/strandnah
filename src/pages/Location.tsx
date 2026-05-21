@@ -104,9 +104,9 @@ export default function Location() {
           <p className="text-lg opacity-80 mb-10 max-w-2xl mx-auto">
             Lassen Sie sich von der Magie Usedoms verzaubern. Gerne zeigen wir Ihnen unsere Objekte auch vor Ort.
           </p>
-          <button className="bg-white text-black px-10 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors relative z-10 transition-transform active:scale-95">
+          <a href="/kontakt" className="inline-block bg-white text-black px-10 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors relative z-10 transition-transform active:scale-95">
             Termin vereinbaren
-          </button>
+          </a>
         </section>
       </div>
     </div>
