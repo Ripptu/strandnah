@@ -33,7 +33,7 @@ export const SEASONS: SeasonConfig[] = [
   }
 ];
 
-export function getPriceForDate(date: Date): number {
+export function getPriceForDate(date: Date, customPrices?: Record<string, { basePrice: number, weekendPrice: number }>): number {
   const month = date.getMonth();
   const day = date.getDate();
   const dayOfWeek = date.getDay(); // 0 is Sunday, 5 is Friday, 6 is Saturday
@@ -61,14 +61,17 @@ export function getPriceForDate(date: Date): number {
   
   if (!seasonMatch) seasonMatch = SEASONS[1]; // fallback Nebensaison
   
+  const basePrice = customPrices?.[seasonMatch.name]?.basePrice ?? seasonMatch.basePrice;
+  const weekendPrice = customPrices?.[seasonMatch.name]?.weekendPrice ?? seasonMatch.weekendPrice;
+
   // Weekend is Friday and Saturday night (checkout Saturday/Sunday)
   if (dayOfWeek === 5 || dayOfWeek === 6) {
-    return seasonMatch.weekendPrice;
+    return weekendPrice;
   }
-  return seasonMatch.basePrice;
+  return basePrice;
 }
 
-export function calculateBookingDetails(start: Date, end: Date, guests: number = 1) {
+export function calculateBookingDetails(start: Date, end: Date, guests: number = 1, customPrices?: Record<string, { basePrice: number, weekendPrice: number }>) {
   let totalBasePrice = 0;
   const nights: { date: Date, price: number }[] = [];
   
@@ -77,7 +80,7 @@ export function calculateBookingDetails(start: Date, end: Date, guests: number =
   
   let current = new Date(startObj);
   while (current < endObj) {
-    const price = getPriceForDate(current);
+    const price = getPriceForDate(current, customPrices);
     nights.push({ date: new Date(current), price });
     totalBasePrice += price;
     current.setDate(current.getDate() + 1);

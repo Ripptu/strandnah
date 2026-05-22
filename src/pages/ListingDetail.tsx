@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { RENTALS, SALES } from '@/src/constants';
-import ImageGallery from '@/src/components/ImageGallery';
+import { RENTALS, SALES, AREA_LABELS } from '@/src/constants';
+import ImageGallery, { ImageGalleryRef } from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
 import PricingTable from '@/src/components/PricingTable';
 import { calculateBookingDetails, getPriceForDate, SEASONS } from '@/src/lib/pricing';
@@ -9,17 +9,7 @@ import { Shield, Medal, MapPin, Coffee, Car, Wifi, Check, MessageCircle, Loader2
 import { db } from '@/src/lib/firebase';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-const AREA_LABELS: Record<string, string> = {
-  livingRoom: 'Wohnzimmer',
-  kitchen: 'Küche',
-  dining: 'Essbereich',
-  bedroom1: 'Schlafzimmer 1',
-  bedroom2: 'Schlafzimmer 2',
-  bedroom3: 'Schlafzimmer 3',
-  bathroom: 'Badezimmer',
-  guestWc: 'Gäste WC',
-  outdoor: 'Aussenbereich'
-};
+
 
 const FALLBACK_AREA_IMAGES: Record<string, string> = {
   livingRoom: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80',
@@ -40,7 +30,8 @@ export default function ListingDetail() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const galleryRef = useRef<ImageGalleryRef>(null);
+  const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -50,7 +41,8 @@ export default function ListingDetail() {
     zip: '',
     city: '',
     remarks: '',
-    privacyAccepted: false
+    privacyAccepted: false,
+    agbAccepted: false,
   });
 
   const handleInputChange = (e: any) => {
@@ -91,7 +83,7 @@ export default function ListingDetail() {
   };
 
   const booking = selectedRange && selectedRange[0] && selectedRange[1] 
-    ? calculateBookingDetails(selectedRange[0], selectedRange[1], guests)
+    ? calculateBookingDetails(selectedRange[0], selectedRange[1], guests, listing.seasonalPrices)
     : null;
 
   const nights = booking?.numNights || 0;
@@ -127,9 +119,9 @@ export default function ListingDetail() {
   const minNightsRequired = getMinNights();
   const isMinStayMet = nights >= minNightsRequired;
 
-  const currentPricePerNight = selectedRange && selectedRange[0] 
-    ? getPriceForDate(selectedRange[0]) 
-    : (listing ? getPriceNumber(listing.price) : 0);
+  const currentPricePerNight = selectedRange && selectedRange[0] && listing.type === 'rental'
+    ? getPriceForDate(selectedRange[0], listing.seasonalPrices) 
+    : (listing.type === 'rental' ? getPriceForDate(new Date(), listing.seasonalPrices) : (listing ? getPriceNumber(listing.price) : 0));
 
   const handleReserve = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -196,20 +188,26 @@ export default function ListingDetail() {
 
   return (
     <div className="pt-24 pb-20">
-      {fullscreenImage && (
-        <div className="fixed inset-0 z-[300] bg-black bg-opacity-95 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setFullscreenImage(null)}>
-          <button 
-            className="absolute top-6 right-6 text-white hover:text-gray-300 p-2 z-[310] transition-colors"
-            onClick={() => setFullscreenImage(null)}
-          >
-            <X size={36} />
-          </button>
-          <img 
-            src={fullscreenImage} 
-            alt="Fullscreen view" 
-            className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
+      {showAmenitiesModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAmenitiesModal(false)}>
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-2xl font-bold">Was diese Unterkunft bietet</h2>
+              <button onClick={() => setShowAmenitiesModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 md:p-8 overflow-y-auto w-full no-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                {[...(listing.amenities || [])].sort((a, b) => a.localeCompare(b)).map((amenity: string, i: number) => (
+                  <div key={i} className="flex items-center gap-4 py-2 border-b border-gray-50 last:border-0 md:last:border-b-0">
+                    <Check size={24} className="text-black" />
+                    <span className="text-lg text-text-primary">{amenity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -243,7 +241,7 @@ export default function ListingDetail() {
           </div>
         </header>
 
-        <ImageGallery listing={listing} />
+        <ImageGallery listing={listing} ref={galleryRef} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 mt-12">
           {/* Main Info */}
@@ -297,7 +295,7 @@ export default function ListingDetail() {
                       const imgs = Array.isArray(imgData) ? imgData : [imgData];
                       const mainImg = imgs[0];
                       return (
-                        <div key={key} className="w-full relative group cursor-pointer" onClick={() => setFullscreenImage(mainImg)}>
+                        <div key={key} className="w-full relative group cursor-pointer" onClick={() => galleryRef.current?.openGallery(key)}>
                           <div className="aspect-[4/3] rounded-xl overflow-hidden mb-2 border border-gray-100 relative bg-gray-50">
                             <img src={mainImg} loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={label} />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
@@ -313,14 +311,24 @@ export default function ListingDetail() {
             <div className="py-8 border-b border-border-light">
               <h3 className="text-xl font-bold mb-6">Was bietet dir diese Unterkunft</h3>
               {listing.amenities && listing.amenities.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {listing.amenities.map((amenity: string, i: number) => (
-                    <div key={i} className="flex items-center gap-3">
-                       <Check size={20} className="text-gray-400" />
-                       <span>{amenity}</span>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    {listing.amenities.slice(0, 10).map((amenity: string, i: number) => (
+                      <div key={i} className="flex items-center gap-3">
+                         <Check size={20} className="text-gray-400" />
+                         <span>{amenity}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {listing.amenities.length > 10 && (
+                    <button 
+                      onClick={() => setShowAmenitiesModal(true)}
+                      className="border border-black px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                    >
+                      Alle {listing.amenities.length} Ausstattungsmerkmale anzeigen
+                    </button>
+                  )}
+                </>
               ) : (
                 <p className="text-text-secondary italic">Die Ausstattungsmerkmale werden demnächst ergänzt.</p>
               )}
@@ -339,7 +347,7 @@ export default function ListingDetail() {
               </div>
             )}
 
-            {listing.type === 'rental' && <PricingTable />}
+            {listing.type === 'rental' && <PricingTable seasonalPrices={listing.seasonalPrices} />}
 
           </div>
 
@@ -349,7 +357,8 @@ export default function ListingDetail() {
               <div className="p-6 rounded-2xl border border-border-main shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <span className="text-2xl font-bold">{currentPricePerNight} €</span>
+                    <h3 className="text-xl font-bold mb-1">Buchungsanfrage</h3>
+                    <span className="text-2xl font-bold">{listing.type === 'rental' ? currentPricePerNight : listing.price}{listing.type === 'rental' && ' €'}</span>
                     {listing.type === 'rental' && <span className="text-text-secondary"> / Nacht</span>}
                   </div>
                 </div>
@@ -436,14 +445,18 @@ export default function ListingDetail() {
                     <textarea name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="Bemerkung (optional)" className="p-3 border border-gray-300 rounded-xl w-full h-24 resize-none focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
                     
                     <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
+                      <input required type="checkbox" name="agbAccepted" checked={formData.agbAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
+                      <span>(Pflichtfeld) Ich akzeptiere die Allgemeinen Geschäftsbedingungen (AGB) für die Ferienvermietung.</span>
+                    </label>
+                    <label className="flex items-start gap-3 mt-3 text-[11px] text-text-secondary cursor-pointer leading-tight">
                       <input required type="checkbox" name="privacyAccepted" checked={formData.privacyAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
-                      <span>(Pflichtfeld) Ich habe die Datenschutzerklärung zur Kenntnis genommen. Ich stimme zu, dass meine Angaben und Daten zur Beantwortung meiner Anfrage elektronisch erhoben und gespeichert werden. Hinweis: Sie können Ihre Einwilligung jederzeit für die Zukunft per E-Mail an hallo@strandnah-usedom.de widerrufen.</span>
+                      <span>(Pflichtfeld) Ich habe die Datenschutzerklärung zur Kenntnis genommen. Ich stimme zu, dass meine Angaben und Daten zur Beantwortung meiner Anfrage elektronisch erhoben und gespeichert werden.</span>
                     </label>
                   </div>
 
                   <button 
                     type="submit"
-                    disabled={!formData.privacyAccepted || reserving || !!error}
+                    disabled={!formData.privacyAccepted || !formData.agbAccepted || reserving || !!error}
                     className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {reserving ? (

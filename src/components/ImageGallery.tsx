@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { X, Grid } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -8,9 +8,22 @@ interface Props {
   listing: any;
 }
 
-export default function ImageGallery({ listing }: Props) {
+export interface ImageGalleryRef {
+  openGallery: (tabId?: string) => void;
+}
+
+const ImageGallery = forwardRef<ImageGalleryRef, Props>(({ listing }, ref) => {
   const [showLightbox, setShowLightbox] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    openGallery: (tabId = 'all') => {
+      setShowLightbox(true);
+      setActiveTab(tabId);
+      document.body.style.overflow = 'hidden';
+    }
+  }));
 
   const mainImages = listing.images || [];
   const areaImages = listing.areaImages || {};
@@ -18,10 +31,20 @@ export default function ImageGallery({ listing }: Props) {
   // For the grid view, we want up to 5 images. We can mix mainImages and some areaImages if mainImages < 5
   let gridImages = [...mainImages];
   if (gridImages.length < 5) {
-    Object.values(areaImages).forEach((val: any) => {
-      const arr = Array.isArray(val) ? val : [val];
-      gridImages.push(...arr);
-    });
+    const allRoomImageArrays = Object.values(areaImages).map((val: any) => Array.isArray(val) ? val : [val]).filter(arr => arr.length > 0);
+    let round = 0;
+    while (gridImages.length < 5 && allRoomImageArrays.length > 0) {
+      let addedInRound = false;
+      for (const roomImgs of allRoomImageArrays) {
+        if (roomImgs[round] && !gridImages.includes(roomImgs[round])) {
+          gridImages.push(roomImgs[round]);
+          addedInRound = true;
+          if (gridImages.length >= 5) break;
+        }
+      }
+      if (!addedInRound) break; // no more images in any room
+      round++;
+    }
   }
   // Ensure we have 5 valid strings, otherwise duplicate or use placeholder
   gridImages = gridImages.slice(0, 5).filter(Boolean);
@@ -195,19 +218,43 @@ export default function ImageGallery({ listing }: Props) {
                       <img
                         src={optimizeCloudinaryUrl(img, 1200)}
                         loading="lazy"
-                        className="w-full rounded-2xl shadow-sm border border-black/5 object-cover hover:opacity-90 transition-opacity cursor-auto"
+                        className="w-full rounded-2xl shadow-sm border border-black/5 object-cover hover:opacity-90 transition-opacity cursor-pointer"
                         referrerPolicy="no-referrer"
                         alt={`Galerie Bild ${idx + 1}`}
+                        onClick={() => setFullscreenImage(img)}
                       />
                     </motion.div>
                   ))}
                 </div>
               </div>
             </div>
+
+            {/* Single Fullscreen Image Overlay */}
+            {fullscreenImage && (
+              <div 
+                className="fixed inset-0 z-[200] bg-black bg-opacity-95 flex items-center justify-center p-4 backdrop-blur-sm" 
+                onClick={() => setFullscreenImage(null)}
+              >
+                <button 
+                  className="absolute top-6 right-6 text-white hover:text-gray-300 p-2 z-[210] transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setFullscreenImage(null); }}
+                >
+                  <X size={36} />
+                </button>
+                <img 
+                  src={fullscreenImage} 
+                  alt="Fullscreen view" 
+                  className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default ImageGallery;
 

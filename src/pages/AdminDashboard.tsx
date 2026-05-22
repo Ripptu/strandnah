@@ -3,6 +3,7 @@ import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, writeBatch, onSnapshot } from 'firebase/firestore';
 import { Listing, RENTALS, SALES, AREA_LABELS } from '@/src/constants';
 import { Plus, Trash2, Edit2, X, Save, Image as ImageIcon, RefreshCcw, Database, Upload, ArrowLeft, ArrowRight } from 'lucide-react';
+import { SEASONS } from '@/src/lib/pricing';
 import imageCompression from 'browser-image-compression';
 
 export default function AdminDashboard() {
@@ -10,7 +11,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string | string[]>, pdfLinks: string[], icalUrl: string, isActive: boolean }>>({
+  const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string | string[]>, pdfLinks: string[], icalUrl: string, isActive: boolean, seasonalPrices: Record<string, { basePrice: number, weekendPrice: number }> }>>({
     title: '',
     location: '',
     price: '',
@@ -22,7 +23,8 @@ export default function AdminDashboard() {
     areaImages: {},
     pdfLinks: [],
     icalUrl: '',
-    isActive: true
+    isActive: true,
+    seasonalPrices: {}
   });
 
   const [newImage, setNewImage] = useState('');
@@ -222,7 +224,8 @@ export default function AdminDashboard() {
         areaImages: {},
         pdfLinks: [],
         icalUrl: '',
-        isActive: true
+        isActive: true,
+        seasonalPrices: {}
       });
     } catch (error) {
       console.error("Save error:", error);
@@ -248,6 +251,7 @@ export default function AdminDashboard() {
       pdfLinks: listing.pdfLinks || [],
       icalUrl: listing.icalUrl || '',
       isActive: listing.isActive !== false,
+      seasonalPrices: listing.seasonalPrices || {},
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -496,6 +500,74 @@ export default function AdminDashboard() {
                   </select>
                 </div>
               </div>
+
+              {formData.type === 'rental' && (
+                <div className="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                  <h3 className="text-sm font-bold uppercase mb-3 text-text-primary">Individuelle Saison-Preise</h3>
+                  <div className="space-y-3">
+                    {SEASONS.map((season) => (
+                      <div key={season.name} className="flex flex-col gap-2 p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                        <span className="text-sm font-semibold">{season.name}</span>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Basispreis (€)</label>
+                            <input 
+                              type="number" 
+                              value={formData.seasonalPrices?.[season.name]?.basePrice || ''}
+                              onChange={(e) => {
+                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                setFormData(prev => {
+                                  const currentSeasonPrices = prev.seasonalPrices?.[season.name] || { basePrice: season.basePrice, weekendPrice: season.weekendPrice };
+                                  const updatedSeasonPrices = { ...currentSeasonPrices, basePrice: val !== undefined ? val : season.basePrice };
+                                  
+                                  const newSeasonalPrices = { ...prev.seasonalPrices };
+                                  if (val === undefined && updatedSeasonPrices.weekendPrice === season.weekendPrice) {
+                                    delete newSeasonalPrices[season.name];
+                                  } else {
+                                    newSeasonalPrices[season.name] = updatedSeasonPrices;
+                                  }
+
+                                  return { ...prev, seasonalPrices: newSeasonalPrices };
+                                });
+                              }}
+                              placeholder={`Standard: ${season.basePrice}`}
+                              className="w-full p-2 rounded-lg border border-border-main text-sm text-center"
+                              disabled={submitting}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Wochenende (€)</label>
+                            <input 
+                              type="number" 
+                              value={formData.seasonalPrices?.[season.name]?.weekendPrice || ''}
+                              onChange={(e) => {
+                                const val = e.target.value ? Number(e.target.value) : undefined;
+                                setFormData(prev => {
+                                  const currentSeasonPrices = prev.seasonalPrices?.[season.name] || { basePrice: season.basePrice, weekendPrice: season.weekendPrice };
+                                  const updatedSeasonPrices = { ...currentSeasonPrices, weekendPrice: val !== undefined ? val : season.weekendPrice };
+                                  
+                                  const newSeasonalPrices = { ...prev.seasonalPrices };
+                                  if (val === undefined && updatedSeasonPrices.basePrice === season.basePrice) {
+                                    delete newSeasonalPrices[season.name];
+                                  } else {
+                                    newSeasonalPrices[season.name] = updatedSeasonPrices;
+                                  }
+
+                                  return { ...prev, seasonalPrices: newSeasonalPrices };
+                                });
+                              }}
+                              placeholder={`Standard: ${season.weekendPrice}`}
+                              className="w-full p-2 rounded-lg border border-border-main text-sm text-center"
+                              disabled={submitting}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox" 
@@ -796,7 +868,7 @@ export default function AdminDashboard() {
                     type="button" 
                     onClick={() => {
                       setEditingId(null);
-                      setFormData({ title: '', location: '', price: '', description: '', type: 'rental', images: [], features: [], amenities: [], areaImages: {}, pdfLinks: [], isActive: true });
+                      setFormData({ title: '', location: '', price: '', description: '', type: 'rental', images: [], features: [], amenities: [], areaImages: {}, pdfLinks: [], isActive: true, seasonalPrices: {} });
                     }}
                     className="w-full bg-gray-100 py-3 rounded-xl font-bold"
                     disabled={submitting}

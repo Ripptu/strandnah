@@ -13,6 +13,7 @@ export interface Listing {
   areaImages?: Record<string, string | string[]>;
   pdfLinks?: string[];
   isActive?: boolean;
+  seasonalPrices?: Record<string, { basePrice: number; weekendPrice: number }>;
 }
 
 export const AREA_LABELS: Record<string, string> = {
@@ -21,10 +22,11 @@ export const AREA_LABELS: Record<string, string> = {
   dining: 'Essbereich',
   bedroom1: 'Schlafzimmer 1',
   bedroom2: 'Schlafzimmer 2',
-  bedroom3: 'Schlafzimmer 3',
   bathroom: 'Badezimmer',
-  guestWc: 'Gäste WC',
-  outdoor: 'Aussenbereich'
+  hallway1: 'Flur 1',
+  hallway2: 'Flur 2',
+  outdoor: 'Außenbereich',
+  additional: 'Zusätzliche Fotos'
 };
 
 export const optimizeCloudinaryUrl = (url: string, width?: number) => {
