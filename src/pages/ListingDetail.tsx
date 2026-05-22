@@ -72,6 +72,9 @@ export default function ListingDetail() {
     fetchListing();
   }, [id]);
 
+  if (loading) return <div className="pt-40 text-center animate-pulse">Lade Objekt-Details...</div>;
+  if (!listing) return <div className="pt-40 text-center">Objekt nicht gefunden.</div>;
+
   const calculateNights = () => {
     if (!selectedRange || !selectedRange[0] || !selectedRange[1]) return 0;
     const diffTime = Math.abs(selectedRange[1].getTime() - selectedRange[0].getTime());
@@ -83,7 +86,7 @@ export default function ListingDetail() {
   };
 
   const booking = selectedRange && selectedRange[0] && selectedRange[1] 
-    ? calculateBookingDetails(selectedRange[0], selectedRange[1], guests, listing.seasonalPrices)
+    ? calculateBookingDetails(selectedRange[0], selectedRange[1], guests, listing?.seasonalPrices)
     : null;
 
   const nights = booking?.numNights || 0;
@@ -119,9 +122,9 @@ export default function ListingDetail() {
   const minNightsRequired = getMinNights();
   const isMinStayMet = nights >= minNightsRequired;
 
-  const currentPricePerNight = selectedRange && selectedRange[0] && listing.type === 'rental'
-    ? getPriceForDate(selectedRange[0], listing.seasonalPrices) 
-    : (listing.type === 'rental' ? getPriceForDate(new Date(), listing.seasonalPrices) : (listing ? getPriceNumber(listing.price) : 0));
+  const currentPricePerNight = selectedRange && selectedRange[0] && listing?.type === 'rental'
+    ? getPriceForDate(selectedRange[0], listing?.seasonalPrices) 
+    : (listing?.type === 'rental' ? getPriceForDate(new Date(), listing?.seasonalPrices) : (listing ? getPriceNumber(listing.price) : 0));
 
   const handleReserve = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -182,9 +185,6 @@ export default function ListingDetail() {
       setReserving(false);
     }
   };
-
-  if (loading) return <div className="pt-40 text-center animate-pulse">Lade Objekt-Details...</div>;
-  if (!listing) return <div className="pt-40 text-center">Objekt nicht gefunden.</div>;
 
   return (
     <div className="pt-24 pb-20">
