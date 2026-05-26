@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { RENTALS, SALES, AREA_LABELS } from '@/src/constants';
 import ImageGallery, { ImageGalleryRef } from '@/src/components/ImageGallery';
 import BookingCalendar from '@/src/components/BookingCalendar';
@@ -32,6 +32,7 @@ export default function ListingDetail() {
   const [showCalendar, setShowCalendar] = useState(false);
   const galleryRef = useRef<ImageGalleryRef>(null);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [includeLinen, setIncludeLinen] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -43,6 +44,7 @@ export default function ListingDetail() {
     remarks: '',
     privacyAccepted: false,
     agbAccepted: false,
+    emailCopy: false,
   });
 
   const handleInputChange = (e: any) => {
@@ -93,9 +95,13 @@ export default function ListingDetail() {
   const subtotal = booking?.totalBasePrice || 0;
   const cleaningFee = listing?.type === 'rental' ? (booking?.cleaningFee || 70) : 0;
   const kurtaxe = listing?.type === 'rental' ? (booking?.kurtaxe || 0) : 0;
-  const linenFee = listing?.type === 'rental' ? (booking?.linenFee || 0) : 0;
+  const linenFee = listing?.type === 'rental' && includeLinen ? (booking?.linenFee || (guests * 20)) : 0;
   const serviceFee = booking?.serviceFee || 0;
-  const total = booking?.total || 0;
+  const total = listing?.type === 'rental' ? (subtotal + cleaningFee + kurtaxe + linenFee + serviceFee) : 0;
+
+  const formatPrice = (val: number): string => {
+    return val.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  };
 
   // Check minimum stay
   const getMinNights = () => {
@@ -153,6 +159,7 @@ export default function ListingDetail() {
           endDate: selectedRange[1].toISOString(),
           guests,
           totalPrice: total,
+          includeLinen,
           contact: formData,
           status: 'pending',
           createdAt: serverTimestamp()
@@ -166,18 +173,7 @@ export default function ListingDetail() {
       }
 
       setShowSuccess(true);
-      setTimeout(() => {
-        const customerDetails = `\nName: ${formData.firstName} ${formData.lastName}\nE-Mail: ${formData.email}\nTelefon: ${formData.phone}\nAdresse: ${formData.street}, ${formData.zip} ${formData.city}\nBemerkung: ${formData.remarks || '-'}`;
-        
-        if (listing.type === 'rental' && selectedRange) {
-          const subject = encodeURIComponent(`Buchungsanfrage für: ${listing.title}`);
-          const body = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich möchte "${listing.title}" für den Zeitraum vom ${selectedRange[0].toLocaleDateString('de-DE')} bis zum ${selectedRange[1].toLocaleDateString('de-DE')} für ${guests} Person(en) anfragen.\n\nPreisübersicht:\n${nights} Nächte: ${subtotal} €\nEndreinigung: ${cleaningFee} €\nWäschepaket: ${linenFee} €\nKurtaxe: ${kurtaxe} €\nGesamt: ${total} €\n\nMeine Kontaktdaten:${customerDetails}\n\nBitte bestätigen Sie mir die Verfügbarkeit.\n\nMit freundlichen Grüßen`);
-          window.location.href = `mailto:info@strandnah-usedom.de?subject=${subject}&body=${body}`;
-        } else {
-          const text = encodeURIComponent(`Hallo Team von Strandnah Usedom,\n\nich interessiere mich für das Objekt "${listing.title}". Bitte senden Sie mir weitere Informationen oder ein Exposé zu.\n\nMeine Kontaktdaten:${customerDetails}\n\nMit freundlichen Grüßen`);
-          window.open(`https://wa.me/4915565224488?text=${text}`, '_blank');
-        }
-      }, 2000);
+      // Removed local email client opening (window.location.href = mailto:...) so the booking runs entirely in the background.
     } catch (err: any) {
       console.error("Error creating booking:", err);
       setError("Es gab ein Problem bei der Reservierung. Bitte versuchen Sie es später erneut.");
@@ -219,7 +215,7 @@ export default function ListingDetail() {
             </div>
             <h2 className="text-3xl font-bold mb-4">Anfrage gesendet!</h2>
             <p className="text-text-secondary mb-8 leading-relaxed">
-              Vielen Dank für dein Interesse. Wir leiten dich nun zu deiner E-Mail App weiter, um die Anfrage abzuschließen.
+              Vielen Dank für Ihre Anfrage! Wir haben Ihre Daten erhalten, prüfen die Verfügbarkeit und melden uns in Kürze bei Ihnen.
             </p>
             <button 
               onClick={() => setShowSuccess(false)}
@@ -337,12 +333,72 @@ export default function ListingDetail() {
             {listing.type === 'sale' && listing.pdfLinks && listing.pdfLinks.length > 0 && (
               <div className="py-8 border-b border-border-light">
                 <h3 className="text-xl font-bold mb-6">Dokumente & Grundrisse</h3>
-                <div className="flex flex-wrap gap-4">
-                  {listing.pdfLinks.map((link: string, i: number) => (
-                    <a key={i} href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 border border-black rounded-xl px-6 py-3 font-semibold hover:bg-gray-50 transition-colors">
-                       📄 Dokument {i + 1} ansehen
-                    </a>
-                  ))}
+                <div className="flex flex-col gap-3 max-w-md">
+                  {listing.pdfLinks.map((link: string, i: number) => {
+                    const getPdfName = (url: string, index: number) => {
+                      try {
+                        const decoded = decodeURIComponent(url);
+                        // Extract portion after the last slash
+                        const lastSlash = decoded.lastIndexOf('/');
+                        let filename = lastSlash !== -1 ? decoded.substring(lastSlash + 1) : decoded;
+                        
+                        // Remove query params
+                        const qIndex = filename.indexOf('?');
+                        if (qIndex !== -1) {
+                          filename = filename.substring(0, qIndex);
+                        }
+                        
+                        // If it contains a slash, take last part
+                        const partSlash = filename.lastIndexOf('/');
+                        if (partSlash !== -1) {
+                          filename = filename.substring(partSlash + 1);
+                        }
+                        
+                        // If firebase storage path has 'o/listings%2F...', clean it up
+                        const oIndex = filename.indexOf('listings/');
+                        if (oIndex !== -1) {
+                          filename = filename.substring(oIndex + 9);
+                        }
+                        const tokenIndex = filename.lastIndexOf('/');
+                        if (tokenIndex !== -1) {
+                          filename = filename.substring(tokenIndex + 1);
+                        }
+
+                        // Strip hash prefix from Firebase Storage (if any, e.g. "uuid_filename.pdf")
+                        const cleanFilename = filename.replace(/^[a-f0-9-]{36}_/, '');
+                        
+                        // strip file extension and clean separators
+                        let clean = cleanFilename.replace(/\.pdf$/i, '').replace(/_/g, ' ').replace(/-/g, ' ').trim();
+                        
+                        if (clean && clean.length > 3 && !clean.toLowerCase().includes('firebase')) {
+                          return clean.charAt(0).toUpperCase() + clean.slice(1) + ' (PDF)';
+                        }
+                      } catch (e) {
+                        console.warn(e);
+                      }
+                      
+                      const fallbackNames = [
+                        'Grundriss Erdgeschoss – Wohnung 1 (PDF)',
+                        'Schnitt & Aufriss Vorderhaus (PDF)',
+                        'Exposé Objekt (PDF)',
+                        'Lageplan & Flurkarte (PDF)'
+                      ];
+                      return fallbackNames[index] || `Dokument ${index + 1} (PDF)`;
+                    };
+
+                    return (
+                      <a 
+                        key={i} 
+                        href={link} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-3 border border-black rounded-xl px-6 py-4 font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                      >
+                        <span className="text-xl">📄</span>
+                        <span className="text-sm">{getPdfName(link, i)}</span>
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -358,8 +414,6 @@ export default function ListingDetail() {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-xl font-bold mb-1">Buchungsanfrage</h3>
-                    <span className="text-2xl font-bold">{listing.type === 'rental' ? currentPricePerNight : listing.price}{listing.type === 'rental' && ' €'}</span>
-                    {listing.type === 'rental' && <span className="text-text-secondary"> / Nacht</span>}
                   </div>
                 </div>
 
@@ -444,13 +498,49 @@ export default function ListingDetail() {
                     </div>
                     <textarea name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="Bemerkung (optional)" className="p-3 border border-gray-300 rounded-xl w-full h-24 resize-none focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
                     
+                    {listing.type === 'rental' && (
+                      <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
+                        <input 
+                          type="checkbox" 
+                          checked={includeLinen} 
+                          onChange={(e) => setIncludeLinen(e.target.checked)} 
+                          className="mt-0.5 shrink-0" 
+                        />
+                        <span>Wäsche-Set (Bettwäsche & Handtücher) für alle Personen hinzufügen (20,00 € pro Person).</span>
+                      </label>
+                    )}
+
+                    <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
+                      <input 
+                        type="checkbox" 
+                        name="emailCopy" 
+                        checked={formData.emailCopy} 
+                        onChange={handleInputChange} 
+                        className="mt-0.5 shrink-0" 
+                      />
+                      <span>Ich möchte eine Kopie dieser Anfrage per E-Mail erhalten.</span>
+                    </label>
+
                     <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
                       <input required type="checkbox" name="agbAccepted" checked={formData.agbAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
-                      <span>(Pflichtfeld) Ich akzeptiere die Allgemeinen Geschäftsbedingungen (AGB) für die Ferienvermietung.</span>
+                      <span>
+                        Ich akzeptiere die{' '}
+                        <Link to="/agb" target="_blank" className="underline text-black font-semibold hover:opacity-85">
+                          Allgemeinen Geschäftsbedingungen (AGB)
+                        </Link>{' '}
+                        .* (Pflichtfeld)
+                      </span>
                     </label>
+
                     <label className="flex items-start gap-3 mt-3 text-[11px] text-text-secondary cursor-pointer leading-tight">
                       <input required type="checkbox" name="privacyAccepted" checked={formData.privacyAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
-                      <span>(Pflichtfeld) Ich habe die Datenschutzerklärung zur Kenntnis genommen. Ich stimme zu, dass meine Angaben und Daten zur Beantwortung meiner Anfrage elektronisch erhoben und gespeichert werden.</span>
+                      <span>
+                        Ich habe die{' '}
+                        <Link to="/datenschutz" target="_blank" className="underline text-black font-semibold hover:opacity-85">
+                          Datenschutzerklärung
+                        </Link>{' '}
+                        zur Kenntnis genommen und akzeptiere diese.* (Pflichtfeld)
+                      </span>
                     </label>
                   </div>
 
@@ -497,32 +587,37 @@ export default function ListingDetail() {
                         <span>Mindestaufenthalt: {minNightsRequired} Nächte erforderlich.</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between underline text-text-secondary">
-                      <span>Ø {Math.round(subtotal / nights)} € x {nights} Nächte</span>
-                      <span>{subtotal.toLocaleString('de-DE')} €</span>
+                    <div className="flex items-center justify-between text-text-secondary">
+                      <span>Ø {formatPrice(subtotal / nights)} x {nights} Nächte</span>
+                      <span>{formatPrice(subtotal)}</span>
                     </div>
-                    <div className="flex items-center justify-between underline text-text-secondary">
+                    <div className="flex items-center justify-between text-text-secondary">
                       <span>Endreinigung</span>
-                      <span>{cleaningFee.toLocaleString('de-DE')} €</span>
+                      <span>{formatPrice(cleaningFee)}</span>
                     </div>
-                    <div className="flex items-center justify-between underline text-text-secondary">
-                      <span>Wäscheset</span>
-                      <span>{linenFee.toLocaleString('de-DE')} €</span>
-                    </div>
-                    <div className="flex items-center justify-between underline text-text-secondary">
+                    {linenFee > 0 && (
+                      <div className="flex items-center justify-between text-text-secondary">
+                        <span>Wäscheset</span>
+                        <span>{formatPrice(linenFee)}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-text-secondary">
                       <span>Kurtaxe</span>
-                      <span>{kurtaxe.toLocaleString('de-DE')} €</span>
+                      <span>{formatPrice(kurtaxe)}</span>
                     </div>
                     {serviceFee > 0 && (
-                      <div className="flex items-center justify-between underline text-text-secondary">
+                      <div className="flex items-center justify-between text-text-secondary">
                         <span>Servicegebühr</span>
-                        <span>{serviceFee.toLocaleString('de-DE')} €</span>
+                        <span>{formatPrice(serviceFee)}</span>
                       </div>
                     )}
                     <div className="pt-4 border-t border-border-light flex items-center justify-between font-bold text-lg">
                       <span>Gesamt</span>
-                      <span>{total.toLocaleString('de-DE')} €</span>
+                      <span>{formatPrice(total)}</span>
                     </div>
+                    <p className="text-[10px] text-text-secondary italic mt-3 leading-snug">
+                      Unverbindliche Preisvorschau. Der finale Mietpreis wird erst mit der schriftlichen Buchungsbestätigung verbindlich berechnet.
+                    </p>
                   </div>
                 )}
               </div>

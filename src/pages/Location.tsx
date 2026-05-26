@@ -1,4 +1,4 @@
-import { MapPin, Sun, Waves, Bike } from 'lucide-react';
+import { MapPin, Sun, Waves, Bike, Maximize } from 'lucide-react';
 
 export default function Location() {
   return (
@@ -57,6 +57,16 @@ export default function Location() {
               <MapPin size={16} className="text-airbnb-red" />
               <span className="text-sm font-bold">Lindenstraße 82, Ahlbeck</span>
             </div>
+            <a 
+              href="https://www.google.com/maps/place/Lindenstra%C3%9Fe+82,+17419+Seebad+Ahlbeck/@53.9388837,14.1852932,17z" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="absolute bottom-4 right-4 bg-white hover:bg-gray-50 text-black px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 font-semibold text-xs transition-all hover:scale-105 active:scale-95"
+              title="Karte im Vollbild auf Google Maps öffnen"
+            >
+              <Maximize size={14} className="text-airbnb-red" />
+              <span>Vollbildmodus</span>
+            </a>
           </div>
         </div>
 

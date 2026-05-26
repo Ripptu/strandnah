@@ -13,6 +13,13 @@ const HERO_IMAGES = [
   'https://s1.directupload.eu/images/260506/qg3trvbx.webp'
 ];
 
+const LIFESTYLE_IMAGES = [
+  'https://s1.directupload.eu/images/260506/bzioxhyn.webp',
+  'https://s1.directupload.eu/images/260506/6yorps8l.webp',
+  'https://s1.directupload.eu/images/260506/qg3trvbx.webp',
+  'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80'
+];
+
 const TeaserCard = ({ title, imgUrl }: { title: string, imgUrl: string }) => (
   <div className="group cursor-default relative">
     <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-4 bg-gray-200 shadow-sm relative">
@@ -33,11 +40,19 @@ export default function Home() {
   const [sales, setSales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lifestyleIndex, setLifestyleIndex] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length);
     }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLifestyleIndex((prev) => (prev + 1) % LIFESTYLE_IMAGES.length);
+    }, 4500);
     return () => clearInterval(timer);
   }, []);
 
@@ -69,12 +84,11 @@ export default function Home() {
           <AnimatePresence mode="popLayout">
             <motion.div
               key={currentImageIndex}
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ 
-                opacity: { duration: 2, ease: "easeInOut" },
-                scale: { duration: 8, ease: "linear" }
+                duration: 2, ease: "easeInOut"
               }}
               className="absolute inset-0 w-full h-full"
             >
@@ -88,42 +102,46 @@ export default function Home() {
           </AnimatePresence>
         </div>
 
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white px-6 text-center">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-white px-6 text-center max-w-4xl mx-auto">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-6 max-w-4xl"
+            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8"
           >
-            Fühlen Sie sich auf Usedom wie zu Hause.
+            <span className="inline-block bg-black/45 px-6 py-4 rounded-2xl backdrop-blur-md border border-white/5 shadow-2xl leading-tight">
+              Fühlen Sie sich auf Usedom wie zu Hause.
+            </span>
           </motion.h1>
 
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-lg md:text-2xl font-light mb-10 max-w-2xl opacity-90"
+            className="text-md md:text-xl font-light mb-12"
           >
-            Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
+            <span className="inline-block bg-black/40 px-5 py-3 rounded-xl backdrop-blur-md border border-white/5 shadow-xl">
+              Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
+            </span>
           </motion.p>
 
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.9, duration: 0.8 }}
-            className="flex flex-col sm:flex-row gap-4"
+            className="flex flex-col sm:flex-row gap-4 items-center justify-center"
           >
             <Link 
               to="/ferienwohnungen" 
-              className="bg-airbnb-red text-white px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
+              className="border-2 border-white/90 bg-white/10 hover:bg-white text-white hover:text-black px-7 py-3 rounded-xl font-medium text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
             >
-              Buchungsanfrage stellen
+              Buchungsanfrage
             </Link>
             <Link 
               to="/kontakt" 
-              className="bg-white text-text-primary px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
+              className="border-2 border-white/90 bg-transparent hover:bg-white text-white hover:text-black px-7 py-3 rounded-xl font-medium text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
             >
-              Kontakt aufnehmen
+              Kontakt
             </Link>
           </motion.div>
         </div>
@@ -267,6 +285,38 @@ export default function Home() {
                 <TeaserCard title="Premium Penthouse Projekt" imgUrl="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80" />
               </>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Lage & Lebensgefühl Usedom Section */}
+      <section className="py-24 max-w-[1280px] mx-auto px-6 border-t border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-bold mb-8 tracking-tight">Lage & Lebensgefühl Usedom</h2>
+            <p className="text-lg text-text-secondary leading-relaxed mb-6">
+              Unsere exklusiven Wohnobjekte liegen in erstklassiger, strandnaher Bestlage im traditionsreichen Seebad Ahlbeck. 
+              Nur wenige Schritte trennen Sie von der berühmten Ahlbecker Seebrücke, dem feinen Ostseesand und der kilometerlangen Strandpromenade.
+            </p>
+            <p className="text-lg text-text-secondary leading-relaxed">
+              Genießen Sie das lebendige Flair des Kaiserbads mit seinen historischen Villen im Stil der Bäderarchitektur, 
+              stilvollen Cafés und erstklassigen Restaurants, während das sanfte Meeresrauschen direkt vor Ihrer Haustür zu Ihrer täglichen Erholung beiträgt.
+            </p>
+          </div>
+          <div className="relative aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl bg-gray-100 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={lifestyleIndex}
+                src={LIFESTYLE_IMAGES[lifestyleIndex]} 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+                className="w-full h-full object-cover absolute inset-0" 
+                alt="Usedom Lebensgefühl" 
+                referrerPolicy="no-referrer"
+              />
+            </AnimatePresence>
           </div>
         </div>
       </section>

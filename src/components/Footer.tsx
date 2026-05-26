@@ -9,12 +9,11 @@ export default function Footer() {
           <div className="col-span-1 md:col-span-1">
             <h3 className="text-xl font-bold mb-6 text-text-primary">Strandnah Usedom</h3>
             <p className="text-text-secondary text-sm leading-relaxed mb-6">
-              Ihr Partner für exklusive Immobilien und unvergessliche Urlaubsmomente auf der Sonneninsel Usedom.
+              Ferien- & Eigentumswohnungen im Seebad Ahlbeck. Erleben Sie die Sonneninsel Usedom von Ihrer schönsten Seite.
             </p>
           </div>
           
-          <div>
-            <h4 className="text-sm font-bold mb-6 text-text-primary">Unternehmen</h4>
+          <div className="md:pt-14">
             <div className="flex flex-col gap-3 text-sm text-text-secondary">
               <Link to="/ferienwohnungen" className="hover:text-black transition-colors">Vermietung</Link>
               <Link to="/eigentumswohnungen" className="hover:text-black transition-colors">Verkauf</Link>
@@ -22,8 +21,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-bold mb-6 text-text-primary">Rechtliches</h4>
+          <div className="md:pt-14">
             <div className="flex flex-col gap-3 text-sm text-text-secondary">
               <Link to="/impressum" className="hover:text-black transition-colors">Impressum</Link>
               <Link to="/datenschutz" className="hover:text-black transition-colors">Datenschutzerklärung</Link>
@@ -31,15 +29,15 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-bold mb-6 text-text-primary">Kontakt</h4>
-            <div className="text-sm text-text-secondary space-y-4">
-              <p>alp Verwaltungs GmbH<br />10707 Berlin</p>
+          <div className="md:pt-14">
+            <div className="text-sm text-text-secondary flex flex-col gap-3">
+              <p>Lindenstraße 82<br />17419 Seebad Ahlbeck</p>
+              <a href="mailto:hallo@strandnah-usedom.de" className="hover:text-black transition-colors">hallo@strandnah-usedom.de</a>
               <a 
                 href="https://wa.me/4915565224488" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="flex items-center gap-2 hover:text-black transition-all pt-2"
+                className="flex items-center gap-2 hover:text-black transition-all"
               >
                 <MessageCircle size={18} className="text-green-600" />
                 <span>+49 15565 224488</span>
