@@ -521,16 +521,18 @@ export default function ListingDetail() {
                       <span>Ich möchte eine Kopie dieser Anfrage per E-Mail erhalten.</span>
                     </label>
 
-                    <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
-                      <input required type="checkbox" name="agbAccepted" checked={formData.agbAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
-                      <span>
-                        Ich akzeptiere die{' '}
-                        <Link to="/agb" target="_blank" className="underline text-black font-semibold hover:opacity-85">
-                          Allgemeinen Geschäftsbedingungen (AGB)
-                        </Link>{' '}
-                        .* (Pflichtfeld)
-                      </span>
-                    </label>
+                    {listing.type === 'rental' && (
+                      <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
+                        <input required type="checkbox" name="agbAccepted" checked={formData.agbAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
+                        <span>
+                          Ich akzeptiere die{' '}
+                          <Link to="/agb" target="_blank" className="underline text-black font-semibold hover:opacity-85">
+                            Allgemeinen Geschäftsbedingungen (AGB)
+                          </Link>{' '}
+                          .* (Pflichtfeld)
+                        </span>
+                      </label>
+                    )}
 
                     <label className="flex items-start gap-3 mt-3 text-[11px] text-text-secondary cursor-pointer leading-tight">
                       <input required type="checkbox" name="privacyAccepted" checked={formData.privacyAccepted} onChange={handleInputChange} className="mt-0.5 shrink-0" />
@@ -546,7 +548,7 @@ export default function ListingDetail() {
 
                   <button 
                     type="submit"
-                    disabled={!formData.privacyAccepted || !formData.agbAccepted || reserving || !!error}
+                    disabled={!formData.privacyAccepted || (listing.type === 'rental' && !formData.agbAccepted) || reserving || !!error}
                     className="w-full bg-airbnb-red text-white py-3 rounded-xl font-bold text-lg hover:bg-opacity-90 transition-colors mb-2 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {reserving ? (
@@ -577,7 +579,9 @@ export default function ListingDetail() {
                   </a>
                 )}
                 
-                <p className="text-center text-sm text-text-secondary mb-4">Dir wird noch nichts berechnet</p>
+                {listing.type === 'rental' && (
+                  <p className="text-center text-sm text-text-secondary mb-4">Dir wird noch nichts berechnet</p>
+                )}
                 
                 {listing.type === 'rental' && selectedRange && booking && (
                   <div className="space-y-3 pt-4 animate-in fade-in slide-in-from-top-2 duration-500 border-t border-border-light">

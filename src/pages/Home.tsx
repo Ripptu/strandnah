@@ -109,7 +109,7 @@ export default function Home() {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8"
           >
-            <span className="inline-block bg-black/45 px-6 py-4 rounded-2xl backdrop-blur-md border border-white/5 shadow-2xl leading-tight">
+            <span className="inline-block bg-black/40 px-6 py-4 leading-tight">
               Fühlen Sie sich auf Usedom wie zu Hause.
             </span>
           </motion.h1>
@@ -120,7 +120,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-md md:text-xl font-light mb-12"
           >
-            <span className="inline-block bg-black/40 px-5 py-3 rounded-xl backdrop-blur-md border border-white/5 shadow-xl">
+            <span className="inline-block bg-black/40 px-5 py-3">
               Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
             </span>
           </motion.p>
