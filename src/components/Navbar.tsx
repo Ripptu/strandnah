@@ -15,10 +15,10 @@ export default function Navbar() {
     setLogoClicks(prev => {
       const newCount = prev + 1;
       if (newCount >= 5) {
-        navigate('/admin');
-        return 0; // Reset counter after navigation
+        setTimeout(() => navigate('/admin'), 0);
+        return 0;
       } else if (newCount === 1) {
-        navigate('/'); // Only navigate to home on the first click so we don't spam router
+        setTimeout(() => navigate('/'), 0);
       }
       return newCount;
     });
