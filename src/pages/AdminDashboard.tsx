@@ -10,6 +10,7 @@ export default function AdminDashboard() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Listing & { amenities: string[], areaImages: Record<string, string | string[]>, pdfLinks: string[], icalUrl: string, isActive: boolean, seasonalPrices: Record<string, { basePrice: number, weekendPrice: number }> }>>({
     title: '',
@@ -260,10 +261,8 @@ export default function AdminDashboard() {
   const handleDelete = async (id: string) => {
     if (!id || submitting) return;
     
-    const confirmDelete = window.confirm("Möchten Sie dieses Objekt wirklich unwiderruflich löschen?");
-    if (!confirmDelete) return;
-    
     setSubmitting(true);
+    setDeleteConfirmId(null);
     setErrorStatus(null);
     try {
       console.log("Attempting to delete document:", id);
@@ -937,13 +936,34 @@ export default function AdminDashboard() {
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button 
-                        onClick={() => handleDelete(l.id)} 
-                        disabled={submitting}
-                        className="bg-white p-3 rounded-full shadow-lg hover:text-airbnb-red disabled:opacity-50"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      {deleteConfirmId === l.id ? (
+                        <div className="flex flex-col gap-2">
+                          <button 
+                            onClick={() => handleDelete(l.id)} 
+                            disabled={submitting}
+                            className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 disabled:opacity-50 flex items-center justify-center text-xs font-bold"
+                            title="Bestätigen"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => setDeleteConfirmId(null)} 
+                            disabled={submitting}
+                            className="bg-gray-200 text-black p-2 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center font-bold"
+                            title="Abbrechen"
+                          >
+                            X
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => setDeleteConfirmId(l.id)} 
+                          disabled={submitting}
+                          className="bg-white p-3 rounded-full shadow-lg hover:text-airbnb-red disabled:opacity-50"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
                     <div className="absolute bottom-4 left-4">
                       <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase">

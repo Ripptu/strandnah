@@ -107,9 +107,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-3"
+            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-2"
           >
-            <span className="inline-block bg-black/25 px-6 py-4 leading-tight">
+            <span className="inline-block bg-black/10 px-6 py-4 backdrop-blur-md border border-white/20 whitespace-normal leading-tight rounded-sm">
               Fühlen Sie sich auf Usedom wie zu Hause.
             </span>
           </motion.h1>
@@ -120,7 +120,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-md md:text-xl font-light mb-8"
           >
-            <span className="inline-block bg-black/25 px-5 py-3">
+            <span className="inline-block bg-black/10 px-5 py-3 backdrop-blur-md border border-white/20 rounded-sm">
               Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
             </span>
           </motion.p>
@@ -133,13 +133,13 @@ export default function Home() {
           >
             <Link 
               to="/ferienwohnungen" 
-              className="border-2 border-white bg-black/25 hover:bg-white text-white hover:text-black px-8 py-2.5 rounded-full font-normal text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
+              className="bg-black/10 backdrop-blur-md border border-white/20 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 hover:scale-105 shadow-lg active:scale-95"
             >
               Buchungsanfrage
             </Link>
             <Link 
               to="/kontakt" 
-              className="border-2 border-white bg-black/25 hover:bg-white text-white hover:text-black px-8 py-2.5 rounded-full font-normal text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
+              className="bg-black/10 backdrop-blur-md border border-white/20 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 hover:scale-105 shadow-lg active:scale-95"
             >
               Kontakt
             </Link>

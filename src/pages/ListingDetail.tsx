@@ -335,27 +335,28 @@ export default function ListingDetail() {
               <div className="py-8 border-b border-border-light">
                 <h3 className="text-xl font-bold mb-6">Dokumente & Grundrisse</h3>
                 <div className="flex flex-col gap-3 max-w-md">
-                  {listing.pdfLinks.map((link: string, i: number) => {
-                    const getPdfName = (url: string, index: number) => {
+                  {listing.pdfLinks.map((linkObj: any, i: number) => {
+                    const isString = typeof linkObj === 'string';
+                    const url = isString ? linkObj : (linkObj.url || '');
+                    const customTitle = isString ? '' : (linkObj.title || '');
+
+                    const getPdfName = (urlToParse: string, index: number) => {
+                      if (customTitle) return customTitle;
                       try {
-                        const decoded = decodeURIComponent(url);
-                        // Extract portion after the last slash
+                        const decoded = decodeURIComponent(urlToParse);
                         const lastSlash = decoded.lastIndexOf('/');
                         let filename = lastSlash !== -1 ? decoded.substring(lastSlash + 1) : decoded;
                         
-                        // Remove query params
                         const qIndex = filename.indexOf('?');
                         if (qIndex !== -1) {
                           filename = filename.substring(0, qIndex);
                         }
                         
-                        // If it contains a slash, take last part
                         const partSlash = filename.lastIndexOf('/');
                         if (partSlash !== -1) {
                           filename = filename.substring(partSlash + 1);
                         }
                         
-                        // If firebase storage path has 'o/listings%2F...', clean it up
                         const oIndex = filename.indexOf('listings/');
                         if (oIndex !== -1) {
                           filename = filename.substring(oIndex + 9);
@@ -365,10 +366,7 @@ export default function ListingDetail() {
                           filename = filename.substring(tokenIndex + 1);
                         }
 
-                        // Strip hash prefix from Firebase Storage (if any, e.g. "uuid_filename.pdf")
                         const cleanFilename = filename.replace(/^[a-f0-9-]{36}_/, '');
-                        
-                        // strip file extension and clean separators
                         let clean = cleanFilename.replace(/\.pdf$/i, '').replace(/_/g, ' ').replace(/-/g, ' ').trim();
                         
                         if (clean && clean.length > 3 && !clean.toLowerCase().includes('firebase')) {
@@ -390,13 +388,13 @@ export default function ListingDetail() {
                     return (
                       <a 
                         key={i} 
-                        href={link} 
+                        href={url} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="flex items-center gap-3 border border-black rounded-xl px-6 py-4 font-semibold hover:bg-gray-50 transition-colors shadow-sm"
                       >
                         <span className="text-xl">📄</span>
-                        <span className="text-sm">{getPdfName(link, i)}</span>
+                        <span className="text-sm">{getPdfName(url, i)}</span>
                       </a>
                     );
                   })}
