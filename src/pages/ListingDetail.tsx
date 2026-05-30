@@ -32,7 +32,7 @@ export default function ListingDetail() {
   const [showCalendar, setShowCalendar] = useState(false);
   const galleryRef = useRef<ImageGalleryRef>(null);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
-  const [includeLinen, setIncludeLinen] = useState(true);
+  const [bringOwnLinen, setBringOwnLinen] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -45,6 +45,7 @@ export default function ListingDetail() {
     privacyAccepted: false,
     agbAccepted: false,
     emailCopy: false,
+    subject: 'rental',
   });
 
   const handleInputChange = (e: any) => {
@@ -95,7 +96,7 @@ export default function ListingDetail() {
   const subtotal = booking?.totalBasePrice || 0;
   const cleaningFee = listing?.type === 'rental' ? (booking?.cleaningFee || 70) : 0;
   const kurtaxe = listing?.type === 'rental' ? (booking?.kurtaxe || 0) : 0;
-  const linenFee = listing?.type === 'rental' && includeLinen ? (booking?.linenFee || (guests * 20)) : 0;
+  const linenFee = listing?.type === 'rental' && !bringOwnLinen ? (booking?.linenFee || (guests * 20)) : 0;
   const serviceFee = booking?.serviceFee || 0;
   const total = listing?.type === 'rental' ? (subtotal + cleaningFee + kurtaxe + linenFee + serviceFee) : 0;
 
@@ -159,7 +160,7 @@ export default function ListingDetail() {
           endDate: selectedRange[1].toISOString(),
           guests,
           totalPrice: total,
-          includeLinen,
+          includeLinen: !bringOwnLinen,
           contact: formData,
           status: 'pending',
           createdAt: serverTimestamp()
@@ -176,7 +177,7 @@ export default function ListingDetail() {
       // Removed local email client opening (window.location.href = mailto:...) so the booking runs entirely in the background.
     } catch (err: any) {
       console.error("Error creating booking:", err);
-      setError("Es gab ein Problem bei der Reservierung. Bitte versuchen Sie es später erneut.");
+      setError("Es gab ein Problem bei der Versendung. Bitte versuchen Sie es später erneut.");
     } finally {
       setReserving(false);
     }
@@ -413,7 +414,9 @@ export default function ListingDetail() {
               <div className="p-6 rounded-2xl border border-border-main shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-xl font-bold mb-1">Buchungsanfrage</h3>
+                    <h3 className="text-xl font-bold mb-1">
+                      {listing.type === 'rental' ? 'Buchungsanfrage' : 'Kaufinteresse Anfrage'}
+                    </h3>
                   </div>
                 </div>
 
@@ -491,6 +494,21 @@ export default function ListingDetail() {
                       <input required name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Telefon" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
                       <input required name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="E-Mail" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
                     </div>
+                    {listing.type === 'sale' && (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold uppercase text-gray-500 ml-1">Ich interessiere mich für:</label>
+                        <select
+                          id="subject"
+                          name="subject"
+                          value={formData.subject || 'sale_self'}
+                          onChange={handleInputChange}
+                          className="w-full p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none text-sm text-text-primary bg-white cursor-pointer"
+                        >
+                          <option value="sale_self">Kaufinteresse (zur Eigennutzung)</option>
+                          <option value="sale_investment">Kaufinteresse (als Kapitalanlage)</option>
+                        </select>
+                      </div>
+                    )}
                     <input required name="street" value={formData.street} onChange={handleInputChange} placeholder="Straße u. Hausnummer" className="p-3 border border-gray-300 rounded-xl w-full focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
                     <div className="grid grid-cols-2 gap-3">
                       <input required name="zip" value={formData.zip} onChange={handleInputChange} placeholder="PLZ" className="p-3 border border-gray-300 rounded-xl focus:border-airbnb-red focus:ring-1 focus:ring-airbnb-red focus:outline-none" />
@@ -502,11 +520,11 @@ export default function ListingDetail() {
                       <label className="flex items-start gap-3 mt-4 text-[11px] text-text-secondary cursor-pointer leading-tight">
                         <input 
                           type="checkbox" 
-                          checked={includeLinen} 
-                          onChange={(e) => setIncludeLinen(e.target.checked)} 
+                          checked={bringOwnLinen} 
+                          onChange={(e) => setBringOwnLinen(e.target.checked)} 
                           className="mt-0.5 shrink-0" 
                         />
-                        <span>Wäsche-Set (Bettwäsche & Handtücher) für alle Personen hinzufügen (20,00 € pro Person).</span>
+                        <span>Wäsche-Spar-Option: Ich bringe eigene Bettwäsche und Handtücher mit und spare 20 EUR pro Person.</span>
                       </label>
                     )}
 

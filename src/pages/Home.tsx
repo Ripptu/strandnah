@@ -107,9 +107,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8"
+            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-3"
           >
-            <span className="inline-block bg-black/40 px-6 py-4 leading-tight">
+            <span className="inline-block bg-black/25 px-6 py-4 leading-tight">
               Fühlen Sie sich auf Usedom wie zu Hause.
             </span>
           </motion.h1>
@@ -118,9 +118,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-md md:text-xl font-light mb-12"
+            className="text-md md:text-xl font-light mb-8"
           >
-            <span className="inline-block bg-black/40 px-5 py-3">
+            <span className="inline-block bg-black/25 px-5 py-3">
               Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
             </span>
           </motion.p>
@@ -133,13 +133,13 @@ export default function Home() {
           >
             <Link 
               to="/ferienwohnungen" 
-              className="border-2 border-white/90 bg-white/10 hover:bg-white text-white hover:text-black px-7 py-3 rounded-xl font-medium text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
+              className="border-2 border-white bg-black/25 hover:bg-white text-white hover:text-black px-8 py-2.5 rounded-full font-normal text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
             >
               Buchungsanfrage
             </Link>
             <Link 
               to="/kontakt" 
-              className="border-2 border-white/90 bg-transparent hover:bg-white text-white hover:text-black px-7 py-3 rounded-xl font-medium text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
+              className="border-2 border-white bg-black/25 hover:bg-white text-white hover:text-black px-8 py-2.5 rounded-full font-normal text-base transition-all duration-300 backdrop-blur-sm hover:scale-105 shadow-lg active:scale-95"
             >
               Kontakt
             </Link>
@@ -304,7 +304,7 @@ export default function Home() {
             </p>
           </div>
           <div className="relative aspect-square md:aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl bg-gray-100 flex items-center justify-center">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               <motion.img 
                 key={lifestyleIndex}
                 src={LIFESTYLE_IMAGES[lifestyleIndex]} 

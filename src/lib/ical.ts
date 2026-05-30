@@ -4,7 +4,8 @@ export async function getBlockedDatesFromIcal(url: string): Promise<Date[]> {
   try {
     // In a real browser environment, you might hit CORS issues with direct fetch
     // Usually, you'd proxy this through your own backend
-    const response = await fetch(url);
+    const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const response = await fetch(proxiedUrl);
     const data = await response.text();
     const events = ical.parseICS(data);
     

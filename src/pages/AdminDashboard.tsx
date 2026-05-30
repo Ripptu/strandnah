@@ -38,8 +38,8 @@ export default function AdminDashboard() {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dvwijhs3c';
-    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'Strandnah';
+    const cloudName = (import.meta as any).env.VITE_CLOUDINARY_CLOUD_NAME || 'dvwijhs3c';
+    const uploadPreset = (import.meta as any).env.VITE_CLOUDINARY_UPLOAD_PRESET || 'Strandnah';
 
     if (!cloudName || !uploadPreset) {
       setErrorStatus("Cloudinary Upload ist nicht konfiguriert. Bitte setzen Sie VITE_CLOUDINARY_CLOUD_NAME und VITE_CLOUDINARY_UPLOAD_PRESET in der .env-Datei.");
@@ -119,7 +119,8 @@ export default function AdminDashboard() {
         } else if (fieldName === 'images') {
           return { ...prev, images: [...(prev.images || []), ...urls] };
         } else if (fieldName === 'pdfLinks') {
-          return { ...prev, pdfLinks: [...(prev.pdfLinks || []), ...urls] };
+          const newObjects = urls.map(url => ({ url, title: '' }));
+          return { ...prev, pdfLinks: [...(prev.pdfLinks || []), ...newObjects] };
         }
         return prev;
       });
@@ -259,7 +260,9 @@ export default function AdminDashboard() {
   const handleDelete = async (id: string) => {
     if (!id || submitting) return;
     
-    // Using a simpler verification since window.confirm might be flaky in some iframes
+    const confirmDelete = window.confirm("Möchten Sie dieses Objekt wirklich unwiderruflich löschen?");
+    if (!confirmDelete) return;
+    
     setSubmitting(true);
     setErrorStatus(null);
     try {
@@ -390,7 +393,7 @@ export default function AdminDashboard() {
 
   const addPdfLink = () => {
     if (newPdfLink && formData.pdfLinks) {
-      setFormData({ ...formData, pdfLinks: [...formData.pdfLinks, newPdfLink] });
+      setFormData({ ...formData, pdfLinks: [...formData.pdfLinks, { url: newPdfLink, title: '' }] });
       setNewPdfLink('');
     }
   };
@@ -749,15 +752,44 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
-                  <div className="flex flex-col gap-2">
-                    {formData.pdfLinks?.map((link, i) => (
-                      <div key={i} className="bg-gray-100 px-3 py-2 rounded-lg text-sm flex justify-between items-center break-all">
-                        <span>{link}</span>
-                        <button type="button" onClick={() => removePdfLink(i)} className="text-red-500 shrink-0 ml-4">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="flex flex-col gap-3">
+                    {formData.pdfLinks?.map((linkObj: any, i) => {
+                      const isString = typeof linkObj === 'string';
+                      const url = isString ? linkObj : (linkObj.url || '');
+                      const title = isString ? '' : (linkObj.title || '');
+
+                      return (
+                        <div key={i} className="bg-gray-50 p-3 rounded-xl border border-gray-200 flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-text-secondary truncate max-w-[80%] font-mono">{url}</span>
+                            <button 
+                              type="button" 
+                              onClick={() => removePdfLink(i)} 
+                              className="text-red-500 hover:text-red-700 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <label className="text-[10px] font-bold uppercase text-gray-500 whitespace-nowrap">Anzeigename:</label>
+                            <input 
+                              type="text" 
+                              value={title} 
+                              onChange={(e) => {
+                                const newTitle = e.target.value;
+                                setFormData(prev => {
+                                  const updated = [...(prev.pdfLinks || [])];
+                                  updated[i] = { url, title: newTitle };
+                                  return { ...prev, pdfLinks: updated };
+                                });
+                              }}
+                              placeholder="z.B. Grundriss Erdgeschoss – Wohnung 1" 
+                              className="flex-grow p-1.5 rounded border border-border-main text-xs"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

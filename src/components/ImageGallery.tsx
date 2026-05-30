@@ -59,11 +59,14 @@ const ImageGallery = forwardRef<ImageGalleryRef, Props>(({ listing }, ref) => {
   const tabs = [{ id: 'all', label: `Alle Fotos` }];
   const allLightboxImages: string[] = [...mainImages];
   
-  Object.entries(areaImages).forEach(([key, val]) => {
-    const arr = Array.isArray(val) ? val : [val];
-    if (arr.some(Boolean)) {
-       tabs.push({ id: key, label: AREA_LABELS[key] || key });
-       arr.forEach((v: string) => v && !allLightboxImages.includes(v) && allLightboxImages.push(v));
+  Object.entries(AREA_LABELS).forEach(([key, label]) => {
+    const val = areaImages[key];
+    if (val) {
+      const arr = Array.isArray(val) ? val : [val];
+      if (arr.some(Boolean)) {
+         tabs.push({ id: key, label });
+         arr.forEach((v: string) => v && !allLightboxImages.includes(v) && allLightboxImages.push(v));
+      }
     }
   });
 
