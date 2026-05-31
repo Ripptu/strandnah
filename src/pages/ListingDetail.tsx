@@ -331,7 +331,7 @@ export default function ListingDetail() {
               )}
             </div>
 
-            {listing.type === 'sale' && listing.pdfLinks && listing.pdfLinks.length > 0 && (
+            {listing.pdfLinks && listing.pdfLinks.length > 0 && (
               <div className="py-8 border-b border-border-light">
                 <h3 className="text-xl font-bold mb-6">Dokumente & Grundrisse</h3>
                 <div className="flex flex-col gap-3 max-w-md">

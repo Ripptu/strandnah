@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import CookieConsent from './components/CookieConsent';
 import Home from './pages/Home';
 import Rentals from './pages/Rentals';
 import Sales from './pages/Sales';
@@ -68,6 +69,7 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <CookieConsent />
       </div>
     </Router>
   );

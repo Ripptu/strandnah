@@ -729,7 +729,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {formData.type === 'sale' && (
+              {(formData.type === 'sale' || formData.type === 'rental') && (
                 <div>
                   <label className="block text-xs font-bold uppercase mb-1">PDF Dokumente (z.B. Grundriss)</label>
                   <div className="flex gap-2 mb-2">
