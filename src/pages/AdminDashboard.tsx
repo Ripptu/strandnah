@@ -52,6 +52,7 @@ export default function AdminDashboard() {
     setErrorStatus(null);
     try {
       const urls: string[] = [];
+      const uploadedObjects: { url: string; originalName: string }[] = [];
       for (let i = 0; i < files.length; i++) {
         let fileToUpload = files[i];
         
@@ -102,6 +103,7 @@ export default function AdminDashboard() {
 
         if (secureUrl) {
           urls.push(secureUrl);
+          uploadedObjects.push({ url: secureUrl, originalName: files[i].name });
         }
       }
 
@@ -120,7 +122,10 @@ export default function AdminDashboard() {
         } else if (fieldName === 'images') {
           return { ...prev, images: [...(prev.images || []), ...urls] };
         } else if (fieldName === 'pdfLinks') {
-          const newObjects = urls.map(url => ({ url, title: '' }));
+          const newObjects = uploadedObjects.map(obj => {
+            const cleanName = obj.originalName.replace(/\.[^/.]+$/, "");
+            return { url: obj.url, title: cleanName };
+          });
           return { ...prev, pdfLinks: [...(prev.pdfLinks || []), ...newObjects] };
         }
         return prev;
@@ -926,6 +931,34 @@ export default function AdminDashboard() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-airbnb-red"></div>
                     </div>
                   )}
+
+                  {/* Fully immersive foolproof delete confirmation overlay */}
+                  {deleteConfirmId === l.id && (
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center text-white animate-in scale-in duration-250">
+                      <Trash2 size={40} className="text-red-500 mb-3 animate-bounce" />
+                      <h4 className="font-bold text-lg mb-1 text-white">Objekt löschen?</h4>
+                      <p className="text-xs text-gray-300 px-2 leading-relaxed mb-6">
+                        Möchten Sie das Objekt "{l.title}" wirklich unwiderruflich aus der Datenbank löschen?
+                      </p>
+                      <div className="flex gap-4 w-full px-4">
+                        <button 
+                          onClick={() => handleDelete(l.id)}
+                          disabled={submitting}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-full text-sm font-bold transition-colors active:scale-95 shadow-lg disabled:opacity-50"
+                        >
+                          Ja, löschen
+                        </button>
+                        <button 
+                          onClick={() => setDeleteConfirmId(null)}
+                          disabled={submitting}
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2.5 rounded-full text-sm font-bold transition-colors active:scale-95 border border-white/20 disabled:opacity-50"
+                        >
+                          Abbrechen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="aspect-[3/4] relative overflow-hidden">
                     <img src={l.images[0]} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                     <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -933,37 +966,18 @@ export default function AdminDashboard() {
                         onClick={() => handleEdit(l)} 
                         disabled={submitting}
                         className="bg-white p-3 rounded-full shadow-lg hover:text-airbnb-red disabled:opacity-50"
+                        title="Bearbeiten"
                       >
                         <Edit2 size={18} />
                       </button>
-                      {deleteConfirmId === l.id ? (
-                        <div className="flex flex-col gap-2">
-                          <button 
-                            onClick={() => handleDelete(l.id)} 
-                            disabled={submitting}
-                            className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 disabled:opacity-50 flex items-center justify-center text-xs font-bold"
-                            title="Bestätigen"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                          <button 
-                            onClick={() => setDeleteConfirmId(null)} 
-                            disabled={submitting}
-                            className="bg-gray-200 text-black p-2 rounded-full shadow-lg hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center font-bold"
-                            title="Abbrechen"
-                          >
-                            X
-                          </button>
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => setDeleteConfirmId(l.id)} 
-                          disabled={submitting}
-                          className="bg-white p-3 rounded-full shadow-lg hover:text-airbnb-red disabled:opacity-50"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => setDeleteConfirmId(l.id)} 
+                        disabled={submitting}
+                        className="bg-white p-3 rounded-full shadow-lg hover:text-airbnb-red disabled:opacity-50"
+                        title="Löschen"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                     <div className="absolute bottom-4 left-4">
                       <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase">

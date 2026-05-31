@@ -31,7 +31,7 @@ export default function Footer() {
 
           <div className="md:pt-14">
             <div className="text-sm text-text-secondary flex flex-col gap-3">
-              <p>Lindenstraße 82<br />17419 Seebad Ahlbeck</p>
+              <p>Lindenstr. 82<br />17419 Seebad Ahlbeck</p>
               <a href="mailto:hallo@strandnah-usedom.de" className="hover:text-black transition-colors">hallo@strandnah-usedom.de</a>
               <a 
                 href="https://wa.me/4915565224488" 

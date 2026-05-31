@@ -53,9 +53,9 @@ export default function Location() {
               loading="lazy" 
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
-            <div className="absolute top-4 left-4 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+            <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-3 font-semibold">
               <MapPin size={16} className="text-airbnb-red" />
-              <span className="text-sm font-bold">Lindenstraße 82, Ahlbeck</span>
+              <span className="text-sm">Lindenstr. 82, 17419 Seebad Ahlbeck</span>
             </div>
             <a 
               href="https://www.google.com/maps/place/Lindenstra%C3%9Fe+82,+17419+Seebad+Ahlbeck/@53.9388837,14.1852932,17z" 

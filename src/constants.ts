@@ -11,7 +11,7 @@ export interface Listing {
   type: 'rental' | 'sale';
   amenities?: string[];
   areaImages?: Record<string, string | string[]>;
-  pdfLinks?: string[];
+  pdfLinks?: any[];
   isActive?: boolean;
   seasonalPrices?: Record<string, { basePrice: number; weekendPrice: number }>;
 }

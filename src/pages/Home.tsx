@@ -107,9 +107,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-2"
+            className="text-4xl md:text-6xl font-extrabold tracking-tight mb-1"
           >
-            <span className="inline-block bg-black/10 px-6 py-4 backdrop-blur-md border border-white/20 whitespace-normal leading-tight rounded-sm">
+            <span className="inline-block bg-black/30 px-6 py-4 whitespace-normal leading-tight rounded-xl shadow-xl">
               Fühlen Sie sich auf Usedom wie zu Hause.
             </span>
           </motion.h1>
@@ -118,9 +118,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.8 }}
-            className="text-md md:text-xl font-light mb-8"
+            className="text-md md:text-xl font-light mb-6"
           >
-            <span className="inline-block bg-black/10 px-5 py-3 backdrop-blur-md border border-white/20 rounded-sm">
+            <span className="inline-block bg-black/30 px-5 py-3 rounded-xl shadow-lg">
               Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
             </span>
           </motion.p>
@@ -133,13 +133,13 @@ export default function Home() {
           >
             <Link 
               to="/ferienwohnungen" 
-              className="bg-black/10 backdrop-blur-md border border-white/20 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 hover:scale-105 shadow-lg active:scale-95"
+              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
             >
               Buchungsanfrage
             </Link>
             <Link 
               to="/kontakt" 
-              className="bg-black/10 backdrop-blur-md border border-white/20 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 hover:scale-105 shadow-lg active:scale-95"
+              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
             >
               Kontakt
             </Link>
@@ -341,9 +341,9 @@ export default function Home() {
               loading="lazy" 
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
-            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-black px-4 py-2 rounded-full shadow-lg flex items-center gap-2 font-medium">
+            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur text-black px-4 py-2 rounded-full shadow-lg flex items-center gap-3 font-semibold">
               <MapPin size={16} className="text-airbnb-red" />
-              <span className="text-sm">Lindenstraße 82, Ahlbeck</span>
+              <span className="text-sm">Lindenstr. 82, 17419 Seebad Ahlbeck</span>
             </div>
           </div>
         </div>
