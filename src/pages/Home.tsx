@@ -133,13 +133,13 @@ export default function Home() {
           >
             <Link 
               to="/ferienwohnungen" 
-              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-none font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
+              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
             >
               Buchungsanfrage
             </Link>
             <Link 
               to="/kontakt" 
-              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-none font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
+              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
             >
               Kontakt
             </Link>
