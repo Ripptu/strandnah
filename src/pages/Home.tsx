@@ -109,7 +109,7 @@ export default function Home() {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-4xl md:text-6xl font-extrabold tracking-tight mb-1"
           >
-            <span className="inline-block bg-black/30 px-6 py-4 whitespace-normal leading-tight rounded-xl shadow-xl">
+            <span className="inline-block bg-black/30 px-6 py-4 whitespace-normal leading-tight rounded-none shadow-xl">
               Fühlen Sie sich auf Usedom wie zu Hause.
             </span>
           </motion.h1>
@@ -120,7 +120,7 @@ export default function Home() {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-md md:text-xl font-light mb-6"
           >
-            <span className="inline-block bg-black/30 px-5 py-3 rounded-xl shadow-lg">
+            <span className="inline-block bg-black/30 px-5 py-3 rounded-none shadow-lg">
               Exklusive Ferienwohnungen und Immobilien direkt an der Ostseeküste.
             </span>
           </motion.p>
@@ -133,13 +133,13 @@ export default function Home() {
           >
             <Link 
               to="/ferienwohnungen" 
-              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
+              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-none font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
             >
               Buchungsanfrage
             </Link>
             <Link 
               to="/kontakt" 
-              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
+              className="bg-black/30 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-none font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-xl active:scale-95"
             >
               Kontakt
             </Link>
